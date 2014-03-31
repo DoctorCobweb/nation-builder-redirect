@@ -1,0 +1,12 @@
+{
+    "name" : "nation-builder-oauth2-redirect"
+  , "version" : "0.0.1"
+  , "description" : "simple redirector for oauth2 flow"
+  , "dependencies" : {
+        "express" : "3.4.8"
+      , "path" : "0.4.9"
+    }
+  , "engines": {
+        "node": "0.10.24"
+  }
+}
