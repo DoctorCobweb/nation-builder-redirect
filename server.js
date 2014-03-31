@@ -24,8 +24,8 @@ app.get('/oauth2callback', function (req, res) {
     console.log('in /oauth2callback route handler');
     console.log(req.query);
 
-    return res.send('hello');
-    //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
+    //return res.send('hello');
+    return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
 });
 
 
