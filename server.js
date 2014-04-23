@@ -8,11 +8,10 @@ var applicationRoot = __dirname,
     request = require('request'),
     PORT = process.env.PORT || 5000;
 
-
+var userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
 var baseUri = 'https://agtest.nationbuilder.com/';
 var responseType = 'code';
 var grantType = 'authorization_code';
-
 var authorizeUri = baseUri + 'oauth/authorize' +
                   '?response_type=' + responseType +
                   '&client_id=' + process.env.CLIENT_ID +
@@ -30,6 +29,7 @@ app.configure(function () {
     app.use(app.router);
     app.use(express.errorHandler({dumpExceptions: true, showStack: true}));
 });
+
 
 
 app.get('/oauth2callback', function (req, res) {
@@ -50,29 +50,39 @@ app.get('/oauth2callback', function (req, res) {
     var options = {
         url: accessTokenUri,
         method: 'POST',
-        json: postBody
+        json: postBody,
+        headers: {
+            'User-Agent': userAgent,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     };
 
-    function callback(error, response, body) {
-        console.log('in callback of POST request to get access token');
-        console.log('error: ' + JSON.stringify(error));
-        console.log('response: ' + JSON.stringify(response));
-        console.log('body: ' + JSON.stringify(body));
-
-        if (!error && response.statusCode == 200) {
-            var info = JSON.parse(body);
-            console.log('info:');
-            console.log(info);
+    if (req.query.code) {
+        function callback(error, response, body) {
+            console.log('in callback of POST request to get access token');
+            console.log('error: ' + JSON.stringify(error));
+            //console.log('response: ' + JSON.stringify(response));
+            //console.log('body: ' + JSON.stringify(body));
     
-            return res.redirect('https://www.google.com.au');
+            if (!error && response.statusCode == 200) {
+                var info = JSON.parse(body);
+                console.log('info:');
+                console.log(info);
+        
+                return res.redirect('https://www.google.com.au');
+            }
+           // return res.redirect('https://www.google.com.au');
         }
-       // return res.redirect('https://www.google.com.au');
+        
+        console.log('making request to nation builder to get access token.');
+        return request(options, callback);
+        //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
+    } else {
+        console.log('we are somewhere else');
+        console.log('req.body: ' + JSON.stringify(req.body));
+        return res.send('somewhere else, aaaahhh');
     }
-    
-    console.log('making request to nation builder to get access token.');
-    return request(options, callback);
-    //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
-
 });
 
 
