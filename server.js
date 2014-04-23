@@ -58,34 +58,20 @@ app.get('/oauth2callback', function (req, res) {
         }
     };
 
-    if (req.query.code) {
-        function callback(error, response, body) {
-            console.log('in callback of POST request to get access token');
-            console.log('error: ' + error);
-            console.log('response: ' + response);
-            console.log('body: ' + body);
+    function callback(error, response, body) {
+        console.log('in callback of POST request to get access token');
              
-            if (!error && response.statusCode == 200) {
-                console.log(response.body.access_token);
-                console.log(response.body.token_type);
-                console.log(response.body.scope);
-
-                console.log(body.access_token);
-                console.log(body.token_type);
-                console.log(body.scope);
+        if (!error && response.statusCode == 200) {
+            //console.log(body.access_token);
+            //console.log(body.token_type);
+            //console.log(body.scope);
         
-                return res.redirect('https://www.google.com.au');
-            }
+            return res.send(body.access_token);
         }
-        
-        console.log('making request to nation builder to get access token.');
-        return request(options, callback);
-        //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
-    } else {
-        console.log('we are somewhere else');
-        console.log('req.body: ' + JSON.stringify(req.body));
-        return res.send('somewhere else, aaaahhh');
     }
+        
+    console.log('making request to nation builder to get access token.');
+    return request(options, callback);
 });
 
 
