@@ -55,7 +55,7 @@ app.get('/oauth2callback', function (req, res) {
 
     function callback(error, response, body) {
         console.log('in callback of POST request to get access token');
-        console.log('error: ' + JSON.stringify(error);
+        console.log('error: ' + JSON.stringify(error));
         console.log('response: ' + JSON.stringify(response));
         console.log('body: ' + JSON.stringify(body));
 
