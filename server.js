@@ -6,6 +6,7 @@ var applicationRoot = __dirname,
     path = require('path'),
     express = require('express'),
     request = require('request'),
+    exec = require('child_process').exec,
     PORT = process.env.PORT || 5000;
 
 var userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
@@ -30,6 +31,47 @@ app.configure(function () {
     app.use(express.errorHandler({dumpExceptions: true, showStack: true}));
 });
 
+app.get('/logthedawgin', function (req, res) {
+    console.log('in GET /logthedawgin handler');
+
+    //constuct the parameters to append to nation-builder-1.js from 
+    //process.env object here
+    var cmd1 = 'echo ' + '"var clientId = ' + 
+                '\''   + process.env.CLIENT_ID + '\';"' + ' >> mimick.js';
+    var cmd2 = 'echo ' + '"var clientSecret = ' + 
+                '\'' + process.env.CLIENT_SECRET + '\';"' + ' >> mimick.js';
+    var cmd3 = 'echo ' + '"var redirectUri = ' + 
+                '\'' + process.env.REDIRECT_URI + '\';"' + ' >> mimick.js';
+
+    
+    function clientId () {
+        exec(cmd1, {}, function (e, stdout, stderr) {
+            if (e) {
+                throw new Error('ERROR: couldnt add clientId variable');
+            }
+            clientSecret();
+        });
+    }
+    function clientSecret () {
+        exec(cmd2, {}, function (e, stdout, stderr) {
+            if (e) {
+                throw new Error('ERROR: couldnt add clientSecret variable');
+            }
+            redirectUri();
+        });
+    }
+    function redirectUri () {
+        exec(cmd3, {}, function (e, stdout, stderr) {
+            if (e) {
+                throw new Error('ERROR: couldnt add redirectUri variable');
+            }
+            return res.send('cmd1,2,3 all OK');
+        });
+    }
+
+
+    return clientId();
+});
 
 
 app.get('/oauth2callback', function (req, res) {
