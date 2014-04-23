@@ -68,6 +68,7 @@ app.get('/oauth2callback', function (req, res) {
             return res.redirect('https://www.google.com.au');
         }
         */
+        return res.redirect('https://www.google.com.au');
     }
     
     console.log('making request to nation builder to get access token.');
