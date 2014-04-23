@@ -59,24 +59,20 @@ app.get('/oauth2callback', function (req, res) {
     };
 
     if (req.query.code) {
-        function callback(error, response, body) {
+        function callback(error, yadda, yeah) {
             console.log('in callback of POST request to get access token');
             console.log('error: ' + JSON.stringify(error));
-            //console.log('response: ' + JSON.stringify(response));
-            //console.log('body: ' + JSON.stringify(body));
+            console.log('response: ' + response));
+            console.log('body: ' + body);
     
-            return res.redirect('https://www.google.com.au');
              
-            /* 
             if (!error && response.statusCode == 200) {
-                var info = JSON.parse(body);
+                //var info = JSON.parse(body);
                 console.log('info:');
                 console.log(info);
         
                 return res.redirect('https://www.google.com.au');
             }
-            */
-           // return res.redirect('https://www.google.com.au');
         }
         
         console.log('making request to nation builder to get access token.');
