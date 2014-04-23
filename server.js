@@ -69,7 +69,7 @@ app.get('/oauth2callback', function (req, res) {
             //console.log(body.token_type);
             //console.log(body.scope);
         
-            return res.send(body.access_token);
+            return res.send({'access_token': body.access_token});
         }
     }
         
