@@ -66,7 +66,7 @@ app.get('/oauth2callback', function (req, res) {
             console.log('body: ' + yeah);
     
              
-            if (!error && yeadd.statusCode == 200) {
+            if (!error && yadda.statusCode == 200) {
                 //var info = JSON.parse(body);
                 console.log('info:');
                 //console.log(yeah);
