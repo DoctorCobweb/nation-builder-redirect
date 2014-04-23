@@ -72,7 +72,7 @@ app.get('/oauth2callback', function (req, res) {
     }
     
     console.log('making request to nation builder to get access token.');
-    request(options, callback);
+    return request(options, callback);
     //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
 });
 
