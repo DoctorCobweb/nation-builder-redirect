@@ -37,7 +37,7 @@ app.get('/oauth2callback', function (req, res) {
     console.log(req.query.code);
 
     //ultimately we want to res with json data so set the headers accordingly
-    res.set('Content-Type': 'application/json');
+    res.set('Content-Type', 'application/json');
 
     var postBody = {
         'client_id': process.env.CLIENT_ID,
