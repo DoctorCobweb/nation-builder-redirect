@@ -61,15 +61,14 @@ app.get('/oauth2callback', function (req, res) {
     if (req.query.code) {
         function callback(error, yadda, yeah) {
             console.log('in callback of POST request to get access token');
-            console.log('error: ' + JSON.stringify(error));
+            console.log('error: ' + error);
             console.log('response: ' + yadda);
             console.log('body: ' + yeah);
-    
              
             if (!error && yadda.statusCode == 200) {
-                //var info = JSON.parse(body);
-                console.log('info:');
-                //console.log(yeah);
+                console.log(yadda.body.access_token);
+                console.log(yadda.body.token_type);
+                console.log(yadda.body.scope);
         
                 return res.redirect('https://www.google.com.au');
             }
