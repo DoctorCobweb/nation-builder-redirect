@@ -65,6 +65,9 @@ app.get('/oauth2callback', function (req, res) {
             //console.log('response: ' + JSON.stringify(response));
             //console.log('body: ' + JSON.stringify(body));
     
+            return res.redirect('https://www.google.com.au');
+             
+            /* 
             if (!error && response.statusCode == 200) {
                 var info = JSON.parse(body);
                 console.log('info:');
@@ -72,6 +75,7 @@ app.get('/oauth2callback', function (req, res) {
         
                 return res.redirect('https://www.google.com.au');
             }
+            */
            // return res.redirect('https://www.google.com.au');
         }
         
