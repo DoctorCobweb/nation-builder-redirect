@@ -36,6 +36,9 @@ app.get('/oauth2callback', function (req, res) {
     console.log('in /oauth2callback route handler');
     console.log(req.query.code);
 
+    //ultimately we want to res with json data so set the headers accordingly
+    res.set('Content-Type': 'application/json');
+
     var postBody = {
         'client_id': process.env.CLIENT_ID,
         'redirect_uri': process.env.REDIRECT_URI,
