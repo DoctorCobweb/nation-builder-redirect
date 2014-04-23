@@ -53,7 +53,6 @@ app.get('/oauth2callback', function (req, res) {
         json: postBody
     };
 
-    /*
     function callback(error, response, body) {
         console.log('in callback of POST request to get access token');
         console.log('error: ' + JSON.stringify(error));
@@ -67,14 +66,12 @@ app.get('/oauth2callback', function (req, res) {
     
             return res.redirect('https://www.google.com.au');
         }
-        return res.redirect('https://www.google.com.au');
+       // return res.redirect('https://www.google.com.au');
     }
     
     console.log('making request to nation builder to get access token.');
-    request(options, callback);
+    return request(options, callback);
     //return res.redirect('leadorganizerapp://oauth2authorization?code=' + req.query.code);
-    */
-    return res.send('okay.');
 
 });
 
