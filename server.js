@@ -52,7 +52,8 @@ app.get('/logthedawgin', function (req, res) {
                 throw new Error('ERROR: couldnt add redirectUri variable');
             }
             console.log(stdout);
-            return res.send(stdout);
+            //return res.send(stdout);
+            return res.send('got the access token, thankyou casperjs');
         });
     }
 
