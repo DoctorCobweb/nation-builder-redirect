@@ -46,7 +46,7 @@ app.get('/logthedawgin', function (req, res) {
     //console.log('casperCmd: ' + casperCmd);
     
     function summonCasper() {
-        console.log('summonCasper...');
+        console.log('wake up, Casper the ghost!');
         exec(casperCmd , {}, function (e, stdout, stderr) {
             if (e) {
                 throw new Error('ERROR: couldnt add redirectUri variable');
@@ -64,7 +64,7 @@ app.get('/logthedawgin', function (req, res) {
 
 app.get('/oauth2callback', function (req, res) {
     console.log('in /oauth2callback route handler');
-    console.log(req.query.code);
+    //console.log(req.query.code);
 
     //ultimately we want to res with json data so set the headers accordingly
     res.set('Content-Type', 'application/json');
@@ -77,8 +77,8 @@ app.get('/oauth2callback', function (req, res) {
         'code': req.query.code
     };
 
-    console.log('postBody:');
-    console.log(postBody);
+    //console.log('postBody:');
+    //console.log(postBody);
 
     var options = {
         url: accessTokenUri,
@@ -92,7 +92,7 @@ app.get('/oauth2callback', function (req, res) {
     };
 
     function callback(error, response, body) {
-        console.log('in callback of POST request to get access token');
+        //console.log('in callback of POST request to get access token');
              
         if (!error && response.statusCode == 200) {
             //console.log(body.access_token);
@@ -105,7 +105,6 @@ app.get('/oauth2callback', function (req, res) {
         }
     }
         
-    console.log('making request to nation builder to get access token.');
     return request(options, callback);
 });
 

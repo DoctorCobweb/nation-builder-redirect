@@ -43,7 +43,7 @@ casper.then(function () {
             'input[id="user_session_password"]' : loginPassword
         }, true);
     } else if (this.exists('input.update')) {
-        this.echo('Authorize input exists. clicking it...');
+        //this.echo('Authorize input exists. clicking it...');
         //sometimes we get a page asking to authorize app access to NB
         //sometimes we don't. think it is to do with caching or something...
         //ui would be the authorize app to access your nation builder
