@@ -15,13 +15,13 @@ var authorizeUri = baseUri + 'oauth/authorize' +
                   '&client_id=' + clientId +
                   '&redirect_uri=' + redirectUri;
 
-//console.log(authorizeUri);
+console.log(authorizeUri);
 
 
 casper.start(authorizeUri, function () {
     //ui would be the standard login form we see in a browser
-    //this.echo(this.getCurrentUrl());
-    //this.echo(this.getTitle());
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
     this.echo('authorizing -> logging you into NB...');
 
     //login to agtest nation builder account
@@ -39,8 +39,8 @@ casper.then(function () {
     //sometimes we don't. think it is to do with caching or something...
     if (this.exists('input.update')) {
         //ui would be the authorize app to access your nation builder
-        //this.echo(this.getCurrentUrl());
-        //this.echo(this.getTitle());
+        this.echo(this.getCurrentUrl());
+        this.echo(this.getTitle());
         this.echo('input element called Authorize exists. click it..');
 
         //click the authorize button
@@ -48,8 +48,8 @@ casper.then(function () {
     } else {
         //no authorize app access to NB, we've gone directly to getting
         //access token
-        //this.echo(this.getCurrentUrl());
-        //this.echo(this.getTitle());
+        this.echo(this.getCurrentUrl());
+        this.echo(this.getTitle());
 
          //****
         this.echo('no input Authorize element. we have the token now.');
@@ -63,10 +63,10 @@ casper.then(function () {
 
 casper.then(function (){
     console.log('we clicked the authorize button, so we ended here:');
-    //this.echo(this.getCurrentUrl());
-    //this.echo(this.getTitle());
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
     //****
-    this.echo(this.getPageContent());
+    //this.echo(this.getPageContent());
 });
 
 
