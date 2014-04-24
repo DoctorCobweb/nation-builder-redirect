@@ -31,13 +31,12 @@ app.configure(function () {
     app.use(express.errorHandler({dumpExceptions: true, showStack: true}));
 });
 
-app.get('/logthedawgin', function (req, res) {
-    console.log('in GET /logthedawgin handler');
-    console.log(req.query);
+app.post('/logthedawgin', function (req, res) {
+    console.log('in POST /logthedawgin handler');
 
     //simple authentication for now for demo purposes
-    if (req.query.email !== process.env.LOGIN_EMAIL ||
-        req.query.password !== process.env.LOGIN_PASSWORD) {
+    if (req.body.email !== process.env.LOGIN_EMAIL ||
+        req.body.password !== process.env.LOGIN_PASSWORD) {
         return res.send({'error': 'credentials are invalid'});
     }
 
@@ -65,7 +64,6 @@ app.get('/logthedawgin', function (req, res) {
             return res.send('got the access token, thankyou casperjs');
         });
     }
-
 
     return summonCasper();
 });
