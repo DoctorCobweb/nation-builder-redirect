@@ -36,41 +36,28 @@ app.get('/logthedawgin', function (req, res) {
 
     //constuct the parameters to append to nation-builder-1.js from 
     //process.env object here
-    var cmd1 = 'echo ' + '"var clientId = ' + 
-                '\''   + process.env.CLIENT_ID + '\';"' + ' >> mimick.js';
-    var cmd2 = 'echo ' + '"var clientSecret = ' + 
-                '\'' + process.env.CLIENT_SECRET + '\';"' + ' >> mimick.js';
-    var cmd3 = 'echo ' + '"var redirectUri = ' + 
-                '\'' + process.env.REDIRECT_URI + '\';"' + ' >> mimick.js';
+    var opt1 = '--clientId=' + process.env.CLIENT_ID;
+    var opt2 = '--clientSecret=' + process.env.CLIENT_SECRET;
+    var opt3 = '--redirectUri=' + process.env.REDIRECT_URI;
+    var opt4 = '--loginEmail=' + process.env.LOGIN_EMAIL;
+    var opt5 = '--loginPassword=' + process.env.LOGIN_PASSWORD;
+    var casperCmd = 'casperjs mimick.js ' + opt1 + opt2 + opt3 + opt4 + opt5;
 
+    console.log('casperCmd: ' + casperCmd);
     
-    function clientId () {
-        exec(cmd1, {}, function (e, stdout, stderr) {
-            if (e) {
-                throw new Error('ERROR: couldnt add clientId variable');
-            }
-            clientSecret();
-        });
-    }
-    function clientSecret () {
-        exec(cmd2, {}, function (e, stdout, stderr) {
-            if (e) {
-                throw new Error('ERROR: couldnt add clientSecret variable');
-            }
-            redirectUri();
-        });
-    }
-    function redirectUri () {
-        exec(cmd3, {}, function (e, stdout, stderr) {
+    function summonCasper() {
+        console.log('summonCasper...');
+        exec(casperCmd , {}, function (e, stdout, stderr) {
             if (e) {
                 throw new Error('ERROR: couldnt add redirectUri variable');
             }
-            return res.send('cmd1,2,3 all OK');
+            console.log(stdout);
+            return res.send('casper was summonded');
         });
     }
 
 
-    return clientId();
+    return summonCasper();
 });
 
 
