@@ -34,6 +34,9 @@ app.configure(function () {
 app.post('/logthedawgin', function (req, res) {
     console.log('in POST /logthedawgin handler');
 
+    //calling device is expectin json as data
+    res.set('Content-Type', 'application/json');
+
     //simple authentication for now for demo purposes
     if (req.body.email !== process.env.LOGIN_EMAIL ||
         req.body.password !== process.env.LOGIN_PASSWORD) {
