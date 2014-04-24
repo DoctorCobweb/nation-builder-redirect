@@ -66,7 +66,7 @@ casper.then(function (){
     this.echo(this.getCurrentUrl());
     this.echo(this.getTitle());
     //****
-    //this.echo(this.getPageContent());
+    this.echo(this.getPageContent());
 });
 
 
