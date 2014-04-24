@@ -36,14 +36,14 @@ app.get('/logthedawgin', function (req, res) {
 
     //constuct the parameters to append to nation-builder-1.js from 
     //process.env object here
-    var opt1 = '--clientId=' + process.env.CLIENT_ID;
-    var opt2 = '--clientSecret=' + process.env.CLIENT_SECRET;
-    var opt3 = '--redirectUri=' + process.env.REDIRECT_URI;
-    var opt4 = '--loginEmail=' + process.env.LOGIN_EMAIL;
-    var opt5 = '--loginPassword=' + process.env.LOGIN_PASSWORD;
+    var opt1 = ' --clientId=' + process.env.CLIENT_ID;
+    var opt2 = ' --clientSecret=' + process.env.CLIENT_SECRET;
+    var opt3 = ' --redirectUri=' + process.env.REDIRECT_URI;
+    var opt4 = ' --loginEmail=' + process.env.LOGIN_EMAIL;
+    var opt5 = ' --loginPassword=' + process.env.LOGIN_PASSWORD;
     var casperCmd = 'casperjs mimick.js ' + opt1 + opt2 + opt3 + opt4 + opt5;
 
-    console.log('casperCmd: ' + casperCmd);
+    //console.log('casperCmd: ' + casperCmd);
     
     function summonCasper() {
         console.log('summonCasper...');
@@ -52,7 +52,7 @@ app.get('/logthedawgin', function (req, res) {
                 throw new Error('ERROR: couldnt add redirectUri variable');
             }
             console.log(stdout);
-            return res.send('casper was summonded');
+            return res.send(stdout);
         });
     }
 

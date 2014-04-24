@@ -8,21 +8,20 @@ var redirectUri = casper.cli.raw.get('redirectUri');
 var loginEmail = casper.cli.raw.get('loginEmail');
 var loginPassword = casper.cli.raw.get('loginPassword');
 
-console.log('running casperjs to handle oauth2 login process..');
-
+//console.log('running casperjs to handle oauth2 login process..');
 
 var authorizeUri = baseUri + 'oauth/authorize' + 
                   '?response_type=' + responseType +
                   '&client_id=' + clientId +
                   '&redirect_uri=' + redirectUri;
 
-console.log(authorizeUri);
+//console.log(authorizeUri);
 
 
 casper.start(authorizeUri, function () {
     //ui would be the standard login form we see in a browser
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
     //this.echo('authorizing -> logging you into NB...');
 
     //login to agtest nation builder account
@@ -40,8 +39,8 @@ casper.then(function () {
     //sometimes we don't. think it is to do with caching or something...
     if (this.exists('input.update')) {
         //ui would be the authorize app to access your nation builder
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
         //this.echo('input element called Authorize exists. click it..');
 
         //click the authorize button
@@ -55,7 +54,7 @@ casper.then(function () {
          //****
         //this.echo('no input Authorize element. we have the token now.');
         //body contains the access token
-        //this.echo(this.getPageContent());
+        this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
         this.thenBypass(1);
@@ -64,8 +63,8 @@ casper.then(function () {
 
 casper.then(function (){
     //console.log('we clicked the authorize button, so we ended here:');
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
     //****
     this.echo(this.getPageContent());
 });
