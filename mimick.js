@@ -8,7 +8,7 @@ var redirectUri = casper.cli.raw.get('redirectUri');
 var loginEmail = casper.cli.raw.get('loginEmail');
 var loginPassword = casper.cli.raw.get('loginPassword');
 
-//console.log('running casperjs to handle oauth2 login process..');
+console.log('running casperjs to handle oauth2 login process..');
 
 var authorizeUri = baseUri + 'oauth/authorize' + 
                   '?response_type=' + responseType +
@@ -22,7 +22,7 @@ casper.start(authorizeUri, function () {
     //ui would be the standard login form we see in a browser
     //this.echo(this.getCurrentUrl());
     //this.echo(this.getTitle());
-    //this.echo('authorizing -> logging you into NB...');
+    this.echo('authorizing -> logging you into NB...');
 
     //login to agtest nation builder account
     this.fillSelectors('form.user_session_form', {
@@ -33,7 +33,7 @@ casper.start(authorizeUri, function () {
 
 
 casper.then(function () {
-    //console.log('logged into NB, got code param too.');
+    console.log('logged into NB, got code param too.');
 
     //sometimes we get a page asking to authorize app access to NB
     //sometimes we don't. think it is to do with caching or something...
@@ -41,7 +41,7 @@ casper.then(function () {
         //ui would be the authorize app to access your nation builder
         //this.echo(this.getCurrentUrl());
         //this.echo(this.getTitle());
-        //this.echo('input element called Authorize exists. click it..');
+        this.echo('input element called Authorize exists. click it..');
 
         //click the authorize button
         this.click('input.update');   
@@ -52,7 +52,7 @@ casper.then(function () {
         //this.echo(this.getTitle());
 
          //****
-        //this.echo('no input Authorize element. we have the token now.');
+        this.echo('no input Authorize element. we have the token now.');
         //body contains the access token
         this.echo(this.getPageContent());
  
@@ -62,7 +62,7 @@ casper.then(function () {
 });
 
 casper.then(function (){
-    //console.log('we clicked the authorize button, so we ended here:');
+    console.log('we clicked the authorize button, so we ended here:');
     //this.echo(this.getCurrentUrl());
     //this.echo(this.getTitle());
     //****
