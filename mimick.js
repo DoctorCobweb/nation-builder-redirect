@@ -8,21 +8,21 @@ var redirectUri = casper.cli.raw.get('redirectUri');
 var loginEmail = casper.cli.raw.get('loginEmail');
 var loginPassword = casper.cli.raw.get('loginPassword');
 
-console.log('running casperjs to handle oauth2 login process..');
+//console.log('running casperjs to handle oauth2 login process..');
 
 var authorizeUri = baseUri + 'oauth/authorize' + 
                   '?response_type=' + responseType +
                   '&client_id=' + clientId +
                   '&redirect_uri=' + redirectUri;
 
-console.log(authorizeUri);
+//console.log(authorizeUri);
 
 
 casper.start(authorizeUri, function () {
-    this.echo('F1');
+    //this.echo('F1');
     //ui would be the standard login form we see in a browser
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
 
     //login to agtest nation builder account
     this.fillSelectors('form.user_session_form', {
@@ -33,10 +33,10 @@ casper.start(authorizeUri, function () {
 
 
 casper.then(function () {
-    this.echo('F2');
+    //this.echo('F2');
 
     if(this.exists('form.user_session_form')){
-        this.echo('LOGIN FAILED...trying again');
+        //this.echo('LOGIN FAILED...trying again');
         //login to agtest nation builder account
         this.fillSelectors('form.user_session_form', {
             'input[id="user_session_email"]': loginEmail,
@@ -47,17 +47,17 @@ casper.then(function () {
         //sometimes we get a page asking to authorize app access to NB
         //sometimes we don't. think it is to do with caching or something...
         //ui would be the authorize app to access your nation builder
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
 
         //click the authorize button
         this.click('input.update');   
     } else {
         //no authorize app access to NB, we've gone directly to getting
         //access token
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
-        this.echo('no input Authorize element. we should have token now.');
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
+        //this.echo('no input Authorize element. we should have token now.');
 
         //body contains the access token
         this.echo(this.getPageContent());
@@ -68,34 +68,34 @@ casper.then(function () {
 });
 
 casper.then(function () {
-    this.echo('F3');
+    //this.echo('F3');
 
     if(this.exists('form.user_session_form')){
-        this.echo('LOGIN FAILED...trying again');
+        //this.echo('LOGIN FAILED...trying again');
         //login to agtest nation builder account
         this.fillSelectors('form.user_session_form', {
             'input[id="user_session_email"]': loginEmail,
             'input[id="user_session_password"]' : loginPassword
         }, true);
     } else if (this.exists('input.update')) {
-        this.echo('Authorize input exists. clicking it...');
+        //this.echo('Authorize input exists. clicking it...');
         //sometimes we get a page asking to authorize app access to NB
         //sometimes we don't. think it is to do with caching or something...
         //ui would be the authorize app to access your nation builder
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
 
         //click the authorize button
         this.click('input.update');   
     } else {
         //no authorize app access to NB, we've gone directly to getting
         //access token
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
-        this.echo('no input Authorize element. we should have token now.');
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
+        //this.echo('no input Authorize element. we should have token now.');
 
         //body contains the access token
-        this.echo(this.getPageContent());
+        //this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
         this.thenBypass(2);
@@ -103,27 +103,27 @@ casper.then(function () {
 });
 
 casper.then(function (){
-    this.echo('F4');
+    //this.echo('F4');
 
     if (this.exists('input.update')) {
-        this.echo('Authorize input exists. clicking it...');
+        //this.echo('Authorize input exists. clicking it...');
         //sometimes we get a page asking to authorize app access to NB
         //sometimes we don't. think it is to do with caching or something...
         //ui would be the authorize app to access your nation builder
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
 
         //click the authorize button
         this.click('input.update');   
     } else {
         //no authorize app access to NB, we've gone directly to getting
         //access token
-        this.echo(this.getCurrentUrl());
-        this.echo(this.getTitle());
-        this.echo('no input Authorize element. we should have token now.');
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
+        //this.echo('no input Authorize element. we should have token now.');
 
         //body contains the access token
-        this.echo(this.getPageContent());
+        //this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
         this.thenBypass(1);
@@ -132,12 +132,18 @@ casper.then(function (){
 
 
 casper.then(function (){
-    this.echo('F5');
+    //this.echo('F5');
+    //this.echo('no input Authorize element. we should have token now.');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
 
-    this.echo('no input Authorize element. we should have token now.');
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
-    this.echo(this.getPageContent());
+    if (this.exists('input.update') || this.exists('form.user_session_form')) {
+        //still have not got a token
+        this.echo('error');
+    } else {
+        //we have a token
+        this.echo(this.getPageContent());
+    }
 });
 
 casper.run();
