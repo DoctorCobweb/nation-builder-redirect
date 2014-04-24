@@ -99,7 +99,7 @@ casper.then(function () {
         //this.echo('no input Authorize element. we should have token now.');
 
         //body contains the access token
-        //this.echo(this.getPageContent());
+        this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
         this.thenBypass(2);
@@ -127,7 +127,7 @@ casper.then(function (){
         //this.echo('no input Authorize element. we should have token now.');
 
         //body contains the access token
-        //this.echo(this.getPageContent());
+        this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
         this.thenBypass(1);
