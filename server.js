@@ -100,6 +100,8 @@ app.get('/oauth2callback', function (req, res) {
             //console.log(body.scope);
         
             return res.send({'access_token': body.access_token});
+        } else {
+            return res.send({'error': 'unable to get access_token'});
         }
     }
         
