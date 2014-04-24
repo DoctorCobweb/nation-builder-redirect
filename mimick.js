@@ -1,3 +1,9 @@
+//PROCEDURE
+//casperjs will try 3 times to get an access token.
+//if it fails, it sends back simply 'error' as its message to user
+//otherwise the response is the access_token.
+
+
 var casper = require('casper').create();
 var utils = require('utils');
 var baseUri = 'https://agtest.nationbuilder.com/';
@@ -8,14 +14,12 @@ var redirectUri = casper.cli.raw.get('redirectUri');
 var loginEmail = casper.cli.raw.get('loginEmail');
 var loginPassword = casper.cli.raw.get('loginPassword');
 
-//console.log('running casperjs to handle oauth2 login process..');
 
 var authorizeUri = baseUri + 'oauth/authorize' + 
                   '?response_type=' + responseType +
                   '&client_id=' + clientId +
                   '&redirect_uri=' + redirectUri;
 
-//console.log(authorizeUri);
 
 
 casper.start(authorizeUri, function () {
@@ -145,5 +149,6 @@ casper.then(function (){
         this.echo(this.getPageContent());
     }
 });
+
 
 casper.run();

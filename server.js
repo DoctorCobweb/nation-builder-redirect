@@ -53,6 +53,8 @@ app.get('/logthedawgin', function (req, res) {
             }
             console.log(stdout);
             //return res.send(stdout);
+            //for now send a constant string. when we are ready to hook it up to the app
+            //we should send stdout back to iphone. 
             return res.send('got the access token, thankyou casperjs');
         });
     }
