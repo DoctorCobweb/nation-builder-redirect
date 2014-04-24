@@ -35,9 +35,16 @@ casper.start(authorizeUri, function () {
 casper.then(function () {
     console.log('logged into NB, got code param too.');
 
-    //sometimes we get a page asking to authorize app access to NB
-    //sometimes we don't. think it is to do with caching or something...
-    if (this.exists('input.update')) {
+    if(this.exists('form.user_session_form')){
+        this.echo('LOGIN FAILED...trying again');
+        //login to agtest nation builder account
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': loginEmail,
+            'input[id="user_session_password"]' : loginPassword
+        }, true);
+    } else if (this.exists('input.update')) {
+        //sometimes we get a page asking to authorize app access to NB
+        //sometimes we don't. think it is to do with caching or something...
         //ui would be the authorize app to access your nation builder
         this.echo(this.getCurrentUrl());
         this.echo(this.getTitle());
