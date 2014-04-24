@@ -19,6 +19,7 @@ console.log(authorizeUri);
 
 
 casper.start(authorizeUri, function () {
+    this.echo('F1');
     //ui would be the standard login form we see in a browser
     this.echo(this.getCurrentUrl());
     this.echo(this.getTitle());
@@ -33,6 +34,7 @@ casper.start(authorizeUri, function () {
 
 
 casper.then(function () {
+    this.echo('F2');
     console.log('logged into NB, got code param too.');
 
     if(this.exists('form.user_session_form')){
@@ -64,17 +66,51 @@ casper.then(function () {
         this.echo(this.getPageContent());
  
         //skip over the next then() because we already have the access token.
-        this.thenBypass(1);
+        this.thenBypass(2);
     }
 });
 
 casper.then(function (){
+    this.echo('F3');
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
+    //****
+    //this.echo(this.getPageContent());
+    if (this.exists('input.update')) {
+        //sometimes we get a page asking to authorize app access to NB
+        //sometimes we don't. think it is to do with caching or something...
+        //ui would be the authorize app to access your nation builder
+        //this.echo(this.getCurrentUrl());
+        //this.echo(this.getTitle());
+        this.echo('input element called Authorize exists. click it..');
+
+        //click the authorize button
+        this.click('input.update');   
+    } else {
+        //no authorize app access to NB, we've gone directly to getting
+        //access token
+        this.echo(this.getCurrentUrl());
+        this.echo(this.getTitle());
+
+         //****
+        this.echo('no input Authorize element. we have the token now.');
+        //body contains the access token
+        this.echo(this.getPageContent());
+ 
+        //skip over the next then() because we already have the access token.
+        this.thenBypass(1);
+    }
+
+});
+
+
+casper.then(function (){
+    this.echo('F4');
     console.log('we clicked the authorize button, so we ended here:');
     this.echo(this.getCurrentUrl());
     this.echo(this.getTitle());
     //****
     this.echo(this.getPageContent());
 });
-
 
 casper.run();
