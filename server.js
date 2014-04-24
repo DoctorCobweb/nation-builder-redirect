@@ -33,6 +33,13 @@ app.configure(function () {
 
 app.get('/logthedawgin', function (req, res) {
     console.log('in GET /logthedawgin handler');
+    console.log(req.query);
+
+    //simple authentication for now for demo purposes
+    if (req.query.email !== process.env.LOGIN_EMAIL ||
+        req.query.password !== process.env.LOGIN_PASSWORD) {
+        return res.send({'error': 'credentials are invalid'});
+    }
 
     //constuct the parameters to append to nation-builder-1.js from 
     //process.env object here
@@ -49,7 +56,7 @@ app.get('/logthedawgin', function (req, res) {
         console.log('wake up, Casper the ghost!');
         exec(casperCmd , {}, function (e, stdout, stderr) {
             if (e) {
-                throw new Error('ERROR: couldnt add redirectUri variable');
+                throw new Error('error: couldnt add redirectUri variable');
             }
             console.log(stdout);
             //return res.send(stdout);
