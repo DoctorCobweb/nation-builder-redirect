@@ -12,6 +12,8 @@ var signOutSelector = 'div.footer-account-links.span-9 >a:last-child';
 
 
 casper.start(newSessionUri, function () {
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
     //console.log('trying to log user in...');
     this.fillSelectors('form.user_session_form', {
         'input[id="user_session_email"]': email,
@@ -20,6 +22,8 @@ casper.start(newSessionUri, function () {
 });
 
 casper.then(function () {
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
     if (this.exists(yourAccountSelector)){
         //console.log('at least an <a> element exists');
         var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
@@ -34,6 +38,8 @@ casper.then(function () {
 })
 
 casper.then(function () {
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
     //log the user out
     if (this.exists(signOutSelector)) {
         this.click(signOutSelector);
@@ -41,8 +47,8 @@ casper.then(function () {
 });
 
 casper.then(function () {
-    //this.echo(this.getCurrentUrl());
-    //this.echo(this.getTitle());
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
 
 });
 casper.run();
