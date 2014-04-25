@@ -21,12 +21,12 @@ casper.start(newSessionUri, function () {
 
 casper.then(function () {
     if (this.exists(yourAccountSelector)){
-        //console.log('at least an <a> element exists');
+        console.log('at least an <a> element exists');
         var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
-        //console.log('hrefVal: ' + hrefVal);
-        //console.log(hrefVal);
+        console.log('hrefVal: ' + hrefVal);
+        console.log(hrefVal);
         var hrefArray = hrefVal.split("/");
-        //this.echo(hrefArray);
+        this.echo(hrefArray);
       
         //this outputs the NB user id
         console.log(hrefArray[3]);
@@ -41,8 +41,8 @@ casper.then(function () {
 });
 
 casper.then(function () {
-    //this.echo(this.getCurrentUrl());
-    //this.echo(this.getTitle());
+    this.echo(this.getCurrentUrl());
+    this.echo(this.getTitle());
 
 });
 casper.run();
