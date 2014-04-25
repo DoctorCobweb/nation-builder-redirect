@@ -77,7 +77,7 @@ app.post('/logthedawgin', function (req, res) {
                 }
                 //stdout is merely the found NBId for the user.
                 myNBId = stdout;
-                console.log(myNBId);
+                console.log('hwat is the: ' + myNBId);
                 summonCasper();
             });
     
