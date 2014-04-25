@@ -12,18 +12,29 @@ var signOutSelector = 'div.footer-account-links.span-9 >a:last-child';
 
 
 casper.start(newSessionUri, function () {
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo('F1');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
     //console.log('trying to log user in...');
-    this.fillSelectors('form.user_session_form', {
-        'input[id="user_session_email"]': email,
-        'input[id="user_session_password"]': password
-    }, true);
+    if (this.exists('form.user_session_form')) {
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': email,
+            'input[id="user_session_password"]': password
+        }, true);
+    }
 });
 
 casper.then(function () {
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo('F2');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
+
+    if (this.exists('form.user_session_form')) {
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': email,
+            'input[id="user_session_password"]': password
+        }, true);
+    } 
     if (this.exists(yourAccountSelector)){
         //console.log('at least an <a> element exists');
         var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
@@ -34,21 +45,106 @@ casper.then(function () {
       
         //this outputs the NB user id
         console.log(hrefArray[3]);
+
+        //this.thenBypass(3);
+        if (this.exists(signOutSelector)) {
+            //console.log('logging out');
+            this.click(signOutSelector);
+            this.thenBypass(3);
+        }
     }
 })
 
 casper.then(function () {
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
-    //log the user out
-    if (this.exists(signOutSelector)) {
-        this.click(signOutSelector);
+    //this.echo('F3');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
+
+    if (this.exists('form.user_session_form')) {
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': email,
+            'input[id="user_session_password"]': password
+        }, true);
+    } 
+    if (this.exists(yourAccountSelector)) {
+        //console.log('at least an <a> element exists');
+        var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
+        //console.log('hrefVal: ' + hrefVal);
+        //console.log(hrefVal);
+        var hrefArray = hrefVal.split("/");
+        //this.echo(hrefArray);
+      
+        //this outputs the NB user id
+        console.log(hrefArray[3]);
+
+        //this.thenBypass(2);
+        if (this.exists(signOutSelector)) {
+            //console.log('logging out');
+            this.click(signOutSelector);
+            this.thenBypass(2);
+        }
     }
 });
 
 casper.then(function () {
-    this.echo(this.getCurrentUrl());
-    this.echo(this.getTitle());
+    //this.echo('F4');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
+    if (this.exists('form.user_session_form')) {
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': email,
+            'input[id="user_session_password"]': password
+        }, true);
+    } 
+    if (this.exists(yourAccountSelector)) {
+        //console.log('at least an <a> element exists');
+        var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
+        //console.log('hrefVal: ' + hrefVal);
+        //console.log(hrefVal);
+        var hrefArray = hrefVal.split("/");
+        //this.echo(hrefArray);
+      
+        //this outputs the NB user id
+        console.log(hrefArray[3]);
+
+        //this.thenBypass(1);
+        if (this.exists(signOutSelector)) {
+            //console.log('logging out');
+            this.click(signOutSelector);
+            this.thenBypass(1);
+        }
+    }
 
 });
+
+casper.then(function () {
+    //this.echo('F5');
+    //this.echo(this.getCurrentUrl());
+    //this.echo(this.getTitle());
+    if (this.exists('form.user_session_form')) {
+        this.fillSelectors('form.user_session_form', {
+            'input[id="user_session_email"]': email,
+            'input[id="user_session_password"]': password
+        }, true);
+    } 
+    if (this.exists(yourAccountSelector)) {
+        //console.log('at least an <a> element exists');
+        var hrefVal = this.getElementAttribute(yourAccountSelector, 'href');
+        //console.log('hrefVal: ' + hrefVal);
+        //console.log(hrefVal);
+        var hrefArray = hrefVal.split("/");
+        //this.echo(hrefArray);
+      
+        //this outputs the NB user id
+        console.log(hrefArray[3]);
+        if (this.exists(signOutSelector)) {
+            //console.log('logging out');
+            this.click(signOutSelector);
+            //this.thenBypass(1);
+        }
+    }
+
+});
+
+
 casper.run();

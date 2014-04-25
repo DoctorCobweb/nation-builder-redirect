@@ -77,7 +77,6 @@ app.post('/logthedawgin', function (req, res) {
                 }
                 //stdout is merely the found NBId for the user.
                 myNBId = stdout;
-                console.log('hwat is the: ' + myNBId);
                 summonCasper();
             });
     
@@ -88,7 +87,7 @@ app.post('/logthedawgin', function (req, res) {
         
         //2. go onto asking for the more laborious task of creating access_token
         function summonCasper() {
-            console.log('wake up, Casper the ghost!');
+            console.log('wake up, lazy Casper');
             exec(casperCmd2 , {}, function (e, stdout, stderr) {
                 if (e) {
                     return res.send({'error': 'summoning failed to get access_token'});
