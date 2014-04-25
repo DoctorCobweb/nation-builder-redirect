@@ -96,9 +96,12 @@ app.post('/logthedawgin', function (req, res) {
                 var result = JSON.parse(stdout);
                 
                 var obj = { "myNBId": myNBId, "access_token":result.access_token};
-                console.log(obj);
 
-                console.log('cool. sending off myNBId and the access_token');
+                //myNBId gets some weird newline char which we dont want
+                var tmp_split= obj["myNBId"].split("\n");
+                obj["myNBId"] = tmp_split[0];
+
+                console.log('sending off myNBId and the access_token');
                 return res.send(obj);
             });
         }
