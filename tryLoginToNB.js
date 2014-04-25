@@ -26,9 +26,17 @@ casper.then(function () {
         //console.log('hrefVal: ' + hrefVal);
         //console.log(hrefVal);
         var hrefArray = hrefVal.split("/");
+        //this.echo(hrefArray);
       
         //this outputs the NB user id
-        this.echo(hrefArray[3]);
+        //there is a trailing newline character that we also want to remove
+        var bloatedId = hrefArray[3];
+        //console.log(bloatedId);
+        //console.log(bloatedId.length);
+        //console.log(bloatedId.substring(0, bloatedId.length - 1));
+        console.log(bloatedId);
+
+        //this.echo(bloatedId.substring(0, bloatedId.length - 1));
     }
 })
 

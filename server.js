@@ -77,6 +77,7 @@ app.post('/logthedawgin', function (req, res) {
                 }
                 //stdout is merely the found NBId for the user.
                 myNBId = stdout;
+                console.log(myNBId);
                 summonCasper();
             });
     
@@ -95,7 +96,7 @@ app.post('/logthedawgin', function (req, res) {
                 var result = JSON.parse(stdout);
                 
                 var obj = { "myNBId": myNBId, "access_token":result.access_token};
-                //console.log(obj);
+                console.log(obj);
 
                 console.log('cool. sending off myNBId and the access_token');
                 return res.send(obj);
