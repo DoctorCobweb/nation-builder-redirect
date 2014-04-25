@@ -33,41 +33,80 @@ app.configure(function () {
 
 app.post('/logthedawgin', function (req, res) {
     console.log('in POST /logthedawgin handler');
-
     //calling device is expectin json as data
     res.set('Content-Type', 'application/json');
 
+    /*
     //simple authentication for now for demo purposes
     if (req.body.email !== process.env.LOGIN_EMAIL ||
         req.body.password !== process.env.LOGIN_PASSWORD) {
         return res.send({'error': 'credentials are invalid'});
     }
+    */
 
-    //constuct the parameters to append to nation-builder-1.js from 
-    //process.env object here
-    var opt1 = ' --clientId=' + process.env.CLIENT_ID;
-    var opt2 = ' --clientSecret=' + process.env.CLIENT_SECRET;
-    var opt3 = ' --redirectUri=' + process.env.REDIRECT_URI;
-    var opt4 = ' --loginEmail=' + process.env.LOGIN_EMAIL;
-    var opt5 = ' --loginPassword=' + process.env.LOGIN_PASSWORD;
-    var casperCmd = 'casperjs mimick.js ' + opt1 + opt2 + opt3 + opt4 + opt5;
-
-    //console.log('casperCmd: ' + casperCmd);
-    
-    function summonCasper() {
-        console.log('wake up, Casper the ghost!');
-        exec(casperCmd , {}, function (e, stdout, stderr) {
-            if (e) {
-                throw new Error('error: couldnt add redirectUri variable');
-            }
-            console.log(stdout);
-            //for now send a constant string. when we are ready to hook it up to the app
-            //we should send stdout back to iphone. 
-            return res.send(stdout);
-        });
+    //make sure the parameters are truthy
+    if (!req.body.email || !req.body.password) {
+        return res.send({'error': 'you supplied some blank credentials'});
     }
 
-    return summonCasper();
+    var myNBId;
+    var opt11 = ' --email=' + req.body.email;
+    var opt12 = ' --password=' + req.body.password;
+    var casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12;
+    //console.log('casperCmd1: ' + casperCmd1);
+
+    //constuct the parameters to send into mimick.js
+    var opt21 = ' --clientId=' + process.env.CLIENT_ID;
+    var opt22 = ' --clientSecret=' + process.env.CLIENT_SECRET;
+    var opt23 = ' --redirectUri=' + process.env.REDIRECT_URI;
+    var opt24 = ' --loginEmail=' + process.env.LOGIN_EMAIL;
+    var opt25 = ' --loginPassword=' + process.env.LOGIN_PASSWORD;
+    var casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 + opt24 + opt25;
+    //console.log('casperCmd2: ' + casperCmd2);
+
+
+
+    function overBearer() {
+        //1. first try to log user in standard NB account using their details
+        //if success, we can get their NBId from the href from 'Your account' <a> 
+        function tryToLoginToNB() {
+            console.log('tryToLoginToNB function called');
+            exec(casperCmd1 , {}, function (e, stdout, stderr) {
+                if (e) {
+                    return res.send({'error': 'summoning failed to log you in'});
+                }
+                //stdout is merely the found NBId for the user.
+                myNBId = stdout;
+                summonCasper();
+            });
+    
+    
+        }
+    
+    
+        
+        //2. go onto asking for the more laborious task of creating access_token
+        function summonCasper() {
+            console.log('wake up, Casper the ghost!');
+            exec(casperCmd2 , {}, function (e, stdout, stderr) {
+                if (e) {
+                    return res.send({'error': 'summoning failed to get access_token'});
+                }
+                var result = JSON.parse(stdout);
+                
+                var obj = { "myNBId": myNBId, "access_token":result.access_token};
+                //console.log(obj);
+
+                console.log('cool. sending off myNBId and the access_token');
+                return res.send(obj);
+            });
+        }
+
+        //start the process
+        tryToLoginToNB();
+    }
+
+    return overBearer();
 });
 
 
