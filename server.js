@@ -197,7 +197,8 @@ app.get('/myLists/:id/:access_token', function (req, res) {
 
             } else {
                 //DO need to paginate
-                console.log('we have ' + (totalPages - 1) + ' more pages to get.');
+                console.log('With per_page= ' + perPage + ' => have ' 
+                          + (totalPages - 1) + ' to get.');
 
                 //create all the extra urls we need to call
                 for (var j = totalPages ; j > 1; j--) {
