@@ -151,7 +151,7 @@ app.get('/oauth2callback', function (req, res) {
 
 
 app.get('/myLists/:id/:access_token', function (req, res) {
-    var perPage = 1000,
+    var perPage = 50,
         allListsArray = [],
         accessToken = req.params.access_token,
         totalPages,
