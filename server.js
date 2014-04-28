@@ -1,5 +1,6 @@
 //
-// server.js : a simple redirect server for the nation builder oauth2 process
+// server.js : a server for the nation builder oauth2 process
+//             it also handles getting all lists from the nation
 //
 
 var applicationRoot = __dirname,
@@ -7,18 +8,20 @@ var applicationRoot = __dirname,
     express = require('express'),
     request = require('request'),
     exec = require('child_process').exec,
-    PORT = process.env.PORT || 5000;
+    PORT = process.env.PORT || 5000,
+    userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
 
-var userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36';
-var baseUri = 'https://agtest.nationbuilder.com/';
-var responseType = 'code';
-var grantType = 'authorization_code';
-var authorizeUri = baseUri + 'oauth/authorize' +
+    baseUri = 'https://agtest.nationbuilder.com/',
+    responseType = 'code',
+    grantType = 'authorization_code',
+    authorizeUri = baseUri + 'oauth/authorize' +
                   '?response_type=' + responseType +
                   '&client_id=' + process.env.CLIENT_ID +
-                  '&redirect_uri=' + process.env.REDIRECT_URI;
+                  '&redirect_uri=' + process.env.REDIRECT_URI,
 
-var accessTokenUri = baseUri + 'oauth/token';
+    accessTokenUri = baseUri + 'oauth/token',
+    allLists = baseUri + 'api/v1/' + 'lists';
+
 
 var app = express();
 
@@ -33,37 +36,27 @@ app.configure(function () {
 
 app.post('/logthedawgin', function (req, res) {
     console.log('in POST /logthedawgin handler');
+
     //calling device is expectin json as data
     res.set('Content-Type', 'application/json');
-
-    /*
-    //simple authentication for now for demo purposes
-    if (req.body.email !== process.env.LOGIN_EMAIL ||
-        req.body.password !== process.env.LOGIN_PASSWORD) {
-        return res.send({'error': 'credentials are invalid'});
-    }
-    */
 
     //make sure the parameters are truthy
     if (!req.body.email || !req.body.password) {
         return res.send({'error': 'you supplied some blank credentials'});
     }
 
-    var myNBId;
-    var opt11 = ' --email=' + req.body.email;
-    var opt12 = ' --password=' + req.body.password;
-    var casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12;
-    //console.log('casperCmd1: ' + casperCmd1);
+    var myNBId,
+        opt11 = ' --email=' + req.body.email,
+        opt12 = ' --password=' + req.body.password,
+        casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12,
 
-    //constuct the parameters to send into mimick.js
-    var opt21 = ' --clientId=' + process.env.CLIENT_ID;
-    var opt22 = ' --clientSecret=' + process.env.CLIENT_SECRET;
-    var opt23 = ' --redirectUri=' + process.env.REDIRECT_URI;
-    var opt24 = ' --loginEmail=' + process.env.LOGIN_EMAIL;
-    var opt25 = ' --loginPassword=' + process.env.LOGIN_PASSWORD;
-    var casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 + opt24 + opt25;
-    //console.log('casperCmd2: ' + casperCmd2);
-
+        //constuct the parameters to send into mimick.js
+        opt21 = ' --clientId=' + process.env.CLIENT_ID,
+        opt22 = ' --clientSecret=' + process.env.CLIENT_SECRET,
+        opt23 = ' --redirectUri=' + process.env.REDIRECT_URI,
+        opt24 = ' --loginEmail=' + process.env.LOGIN_EMAIL,
+        opt25 = ' --loginPassword=' + process.env.LOGIN_PASSWORD,
+        casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 + opt24 + opt25;
 
 
     function overBearer() {
@@ -87,8 +80,6 @@ app.post('/logthedawgin', function (req, res) {
     
         }
     
-    
-        
         //2. go onto asking for the more laborious task of creating access_token
         function summonCasper() {
             console.log('wake up Casper');
@@ -97,8 +88,8 @@ app.post('/logthedawgin', function (req, res) {
                     return res.send({'error': 'summoning failed to get access_token'});
                 }
                 var result = JSON.parse(stdout);
-                
-                var obj = { "myNBId": myNBId, "access_token":result.access_token};
+                accessToken = result.access_token;
+                var obj = { "myNBId": myNBId, "access_token":accessToken};
 
                 //myNBId gets some weird newline char which we dont want
                 var tmp_split= obj["myNBId"].split("\n");
@@ -119,7 +110,6 @@ app.post('/logthedawgin', function (req, res) {
 
 app.get('/oauth2callback', function (req, res) {
     console.log('in /oauth2callback route handler');
-    //console.log(req.query.code);
 
     //ultimately we want to res with json data so set the headers accordingly
     res.set('Content-Type', 'application/json');
@@ -131,9 +121,6 @@ app.get('/oauth2callback', function (req, res) {
         'client_secret': process.env.CLIENT_SECRET,
         'code': req.query.code
     };
-
-    //console.log('postBody:');
-    //console.log(postBody);
 
     var options = {
         url: accessTokenUri,
@@ -147,13 +134,9 @@ app.get('/oauth2callback', function (req, res) {
     };
 
     function callback(error, response, body) {
-        //console.log('in callback of POST request to get access token');
+        console.log('in callback of POST request to get access token');
              
         if (!error && response.statusCode == 200) {
-            //console.log(body.access_token);
-            //console.log(body.token_type);
-            //console.log(body.scope);
-        
             return res.send({'access_token': body.access_token});
         } else {
             return res.send({'error': 'unable to get access_token'});
@@ -161,6 +144,162 @@ app.get('/oauth2callback', function (req, res) {
     }
         
     return request(options, callback);
+});
+
+
+app.get('/myLists/:id/:access_token', function (req, res) {
+    var perPage = 1000,
+        allListsArray = [],
+        accessToken = req.params.access_token,
+        totalPages,
+        totalNumberOfLists,
+        extraUrls = [],
+        firstPageOfLists = allLists + 
+                          '?access_token=' + accessToken + 
+                          '&page=1&per_page=' + perPage,
+        optionsForFirstRequest = {
+        url: firstPageOfLists,
+        method: 'GET',
+        headers: {
+            'User-Agent': userAgent,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        };
+
+
+    function callbackForFirstRequest(error, response, body) {
+        console.log('in callbackForFirstRequest for GET /lists req request.');
+
+        if (error) return errorCb(error);
+      
+        if (response.statusCode == 200) {
+            var bodyObject = JSON.parse(body); // a string
+            totalNumberOfLists = bodyObject.total;
+            totalPages = bodyObject.total_pages; // a number
+            //console.log(bodyObject);
+            console.log('totalNumberOfLists: ' + totalNumberOfLists);
+            console.log('totalPages: ' + totalPages);
+
+            //append individual first page lists to listsArray
+            for (var i = 0; i < bodyObject.results.length; i++) {
+                allListsArray.push(bodyObject.results[i]);
+            }
+            //console.log(allListsArray);
+            
+            //see if we need to paginate to get all lists
+            if (totalPages === 1) {
+                //DONT need to paginate
+                return res.send({'lists': allListsArray});
+
+            } else {
+                //DO need to paginate
+                console.log('we have ' + (totalPages - 1) + ' more pages to get.');
+
+                //create all the extra urls we need to call
+                for (var j = totalPages ; j > 1; j--) {
+                    var aUrl = allLists + '?access_token=' + accessToken +
+                               '&page=' + j + '&per_page=' + perPage;
+                    extraUrls.push(aUrl);
+                }
+
+                //start the heavy lifting to get all the pages concurrently
+                downloadAllAsync(extraUrls, successCb, errorCb);                
+            }
+
+        } else {
+            return errorCb(response.statusCode);
+        }
+    }
+
+
+    function successCb(result) {
+        console.log('successCb called. got all results');
+        //result is an array of arrays wih objects
+        for (var i = 0; i < result.length; i++) {
+            for (var j = 0; j < result[i].length; j++) {
+                allListsArray.push(result[i][j]);
+            }
+        }
+  
+        console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
+        console.log('allListsArray.length = ' + allListsArray.length);
+        console.log('totalNumberOfLists = ' + totalNumberOfLists);
+
+        return res.send({'lists': allListsArray});
+    }
+
+
+    function errorCb(error) {
+        console.log('error: ' + error);
+        return res.send({'error': error});
+    }
+
+
+    function downloadAllAsync(urls, onsuccess, onerror) {
+        var pending = urls.length;
+        var result = [];
+
+        if (pending === 0) {
+            setTimeout(onsuccess.bind(null, result), 0);
+            return;
+        }
+
+        urls.forEach(function (url, i) {
+            downloadAsync(url, function (someListsInAnArray) {
+                if (result) {
+                    result[i] = someListsInAnArray; //store at fixed index
+                    pending--;                    //register the success
+                    if (pending === 0) {
+                        onsuccess(result);
+                    } 
+                }
+            }, function (error) {
+                if (result) {
+                    result = null;
+                    onerror(error);
+                }
+            });
+        });
+    }
+
+
+    function downloadAsync(url_, successCb, errorCb) {
+        //console.log('downloading lists from: ' + url_);
+
+        var optionsIndividual = {
+            url: url_,
+            method: 'GET',
+            headers: {
+                'User-Agent': userAgent,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        };
+
+
+        function callbackIndividual(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                var bodyObj = JSON.parse(body);
+                return successCb(bodyObj.results);
+            } else {
+                return errorCb(error);
+            }
+        }
+
+        //make a call for an individual page of lists
+        request(optionsIndividual, callbackIndividual);
+    }
+
+
+    //ultimately we want to res with json data so set the headers accordingly
+    res.set('Content-Type', 'application/json');
+
+    //KICK OFF
+    //we make an initial call for the first page. from the response we can see how many
+    //additional pages we need to call to get all the lists of a nation.
+    //to get additional pages we make use of downloadAllAsync function
+    request(optionsForFirstRequest, callbackForFirstRequest);
 });
 
 
