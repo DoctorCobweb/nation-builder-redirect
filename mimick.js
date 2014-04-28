@@ -22,6 +22,7 @@ var authorizeUri = baseUri + 'oauth/authorize' +
                   '&redirect_uri=' + redirectUri;
 
 
+//console.log(authorizeUri);
 
 casper.start(authorizeUri, function () {
     //this.echo('F1');
