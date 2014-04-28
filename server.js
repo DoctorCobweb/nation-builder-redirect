@@ -7,10 +7,10 @@ var applicationRoot = __dirname,
     path = require('path'),
     express = require('express'),
     request = require('request'),
+    mongoose = require('mongoose'),
     exec = require('child_process').exec,
     PORT = process.env.PORT || 5000,
     userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
-
     baseUri = 'https://' + process.env.NB_SLUG + '.nationbuilder.com/',
     responseType = 'code',
     grantType = 'authorization_code',
@@ -18,9 +18,37 @@ var applicationRoot = __dirname,
                   '?response_type=' + responseType +
                   '&client_id=' + process.env.CLIENT_ID +
                   '&redirect_uri=' + process.env.REDIRECT_URI,
-
     accessTokenUri = baseUri + 'oauth/token',
     allLists = baseUri + 'api/v1/' + 'lists';
+
+
+//mongodb stuff, used for storing all the lists for a nation
+//using mongolab for cloud hosting the mongodb
+var mongoUri = process.env.MONGOLAB_URI ||
+               'mongodb://localhost/theGreensApp';
+
+var mongoConnection = mongoose.connect(mongoUri, function (err, res) {
+    if (err) throw new Error('ERROR: ' + err);
+
+    console.log('SUCCESS: connected to MongoDB: ' + mongoUri);
+});
+
+
+//define the Schema for a list
+var List = new mongoose.Schema({
+    id:          Number,
+    name:        String,
+    slug:        String,
+    authorId:    {type: Number, index:true},
+    sortOrder:   String,
+    count:       Number
+});
+
+//create the Model of the list. instances of Models are documents in mongodb
+//SYNTAX: mongoConnection.model(modelName, schema)
+var ListModel = mongoConnection.model('List', List);
+
+
 
 
 var app = express();
@@ -193,6 +221,10 @@ app.get('/myLists/:id/:access_token', function (req, res) {
             //see if we need to paginate to get all lists
             if (totalPages === 1) {
                 //DONT need to paginate
+                
+                //create and save all the lists to mongodb
+                saveListsToMongo();
+
                 return res.send({'lists': allListsArray});
 
             } else {
@@ -219,9 +251,12 @@ app.get('/myLists/:id/:access_token', function (req, res) {
 
     function successCb(result) {
         console.log('successCb called. got all results');
+
+        var i, j;
+
         //result is an array of arrays wih objects
-        for (var i = 0; i < result.length; i++) {
-            for (var j = 0; j < result[i].length; j++) {
+        for (i = 0; i < result.length; i++) {
+            for (j = 0; j < result[i].length; j++) {
                 allListsArray.push(result[i][j]);
             }
         }
@@ -229,6 +264,9 @@ app.get('/myLists/:id/:access_token', function (req, res) {
         console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
         console.log('allListsArray.length = ' + allListsArray.length);
         console.log('totalNumberOfLists = ' + totalNumberOfLists);
+       
+        //create and save all the lists to mongodb
+        saveListsToMongo();
 
         return res.send({'lists': allListsArray});
     }
@@ -293,6 +331,62 @@ app.get('/myLists/:id/:access_token', function (req, res) {
 
         //make a call for an individual page of lists
         request(optionsIndividual, callbackIndividual);
+    }
+
+
+    //TODO: dont keep appending duplicate data into db
+    function saveListsToMongo() {
+        var k, someList, listForMongo;
+  
+
+        //instantiate a ListModel for each list we have. 
+        for (k = 0; k < allListsArray.length; k++) {
+            someList = allListsArray[k];
+            //console.log('someList');
+            //console.log(someList);
+
+            listForMongo = new ListModel({
+                id:        someList.id,
+                name:      someList.name,
+                slug:      someList.slug,
+                authorId:  someList.author_id,
+                sortOrder: someList.sort_order,
+                count:     someList.count
+            });
+            listForMongo.save(function (err, list) {
+                if (err) return new Error('Error: ' + err);
+            });
+
+            /*
+            //check to see if the list already exist before adding it
+            ListModel.findOne({'id': someList.id} , function (err, list) {
+                if (err) return console.log(err);
+                if (list) {
+                    console.log('list already exists: updating it.');
+                    console.log(list);
+                    ListModel.update({}, list, function (err) {
+                        if (err) return console.log(err);
+                        console.log('successfully updated list');
+                    });
+                } else {
+                    console.log('list does notexist: adding it.');
+                    console.log('falsy list: ' + list);
+                    listForMongo = new ListModel({
+                        id:        someList.id,
+                        name:      someList.name,
+                        slug:      someList.slug,
+                        authorId:  someList.author_id,
+                        sortOrder: someList.sort_order,
+                        count:     someList.count
+                    });
+                    listForMongo.save(function (err, list) {
+                        if (err) throw new Error('Error: ' + err);
+                    });
+                }
+            });
+            */
+        }
+        console.log('OUTSIDE FOR LOOP in saveListsToMongo()');
     }
 
 
