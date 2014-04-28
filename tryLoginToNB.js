@@ -1,6 +1,6 @@
 var casper = require('casper').create();
-
-var newSessionUri = 'https://agtest.nationbuilder.com/forms/user_sessions/new';
+var slug = 'agv';
+var newSessionUri = 'https://' + slug + '.nationbuilder.com/forms/user_sessions/new';
 var email = casper.cli.raw.get('email');
 var password = casper.cli.raw.get('password');
 
@@ -46,7 +46,6 @@ casper.then(function () {
         //this outputs the NB user id
         console.log(hrefArray[3]);
 
-        //this.thenBypass(3);
         if (this.exists(signOutSelector)) {
             //console.log('logging out');
             this.click(signOutSelector);
@@ -77,7 +76,6 @@ casper.then(function () {
         //this outputs the NB user id
         console.log(hrefArray[3]);
 
-        //this.thenBypass(2);
         if (this.exists(signOutSelector)) {
             //console.log('logging out');
             this.click(signOutSelector);
@@ -140,7 +138,6 @@ casper.then(function () {
         if (this.exists(signOutSelector)) {
             //console.log('logging out');
             this.click(signOutSelector);
-            //this.thenBypass(1);
         }
     }
 
