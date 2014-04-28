@@ -6,8 +6,8 @@
 
 var casper = require('casper').create();
 var utils = require('utils');
-var slug = 'agv';
-var baseUri = 'https://' + slug + '.nationbuilder.com/';
+var NBSlug = casper.cli.raw.get('nationBuilderSlug');;
+var baseUri = 'https://' + NBSlug + '.nationbuilder.com/';
 var responseType = 'code';
 var clientId = casper.cli.raw.get('clientId');
 var clientSecret = casper.cli.raw.get('clientSecret');

@@ -11,8 +11,7 @@ var applicationRoot = __dirname,
     PORT = process.env.PORT || 5000,
     userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
 
-    slug = 'agv',
-    baseUri = 'https://' + slug + '.nationbuilder.com/',
+    baseUri = 'https://' + process.env.NB_SLUG + '.nationbuilder.com/',
     responseType = 'code',
     grantType = 'authorization_code',
     authorizeUri = baseUri + 'oauth/authorize' +
@@ -49,7 +48,8 @@ app.post('/logthedawgin', function (req, res) {
     var myNBId,
         opt11 = ' --email=' + req.body.email,
         opt12 = ' --password=' + req.body.password,
-        casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12,
+        opt13 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
+        casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12 + opt13,
 
         //constuct the parameters to send into mimick.js
         opt21 = ' --clientId=' + process.env.CLIENT_ID,
@@ -57,7 +57,9 @@ app.post('/logthedawgin', function (req, res) {
         opt23 = ' --redirectUri=' + process.env.REDIRECT_URI,
         opt24 = ' --loginEmail=' + process.env.LOGIN_EMAIL,
         opt25 = ' --loginPassword=' + process.env.LOGIN_PASSWORD,
-        casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 + opt24 + opt25;
+        opt26 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
+        casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 
+                                           + opt24 + opt25 + opt26;
 
 
     function overBearer() {

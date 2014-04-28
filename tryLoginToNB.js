@@ -1,6 +1,6 @@
 var casper = require('casper').create();
-var slug = 'agv';
-var newSessionUri = 'https://' + slug + '.nationbuilder.com/forms/user_sessions/new';
+var NBSlug = casper.cli.raw.get('nationBuilderSlug');
+var newSessionUri = 'https://' + NBSlug + '.nationbuilder.com/forms/user_sessions/new';
 var email = casper.cli.raw.get('email');
 var password = casper.cli.raw.get('password');
 
