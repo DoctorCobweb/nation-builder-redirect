@@ -352,53 +352,40 @@ function globalWrapper() {
         function saveListsToMongo() {
             var k, someList, listForMongo;
       
-    
-            //instantiate a ListModel for each list we have. 
-            for (k = 0; k < allListsArray.length; k++) {
-                someList = allListsArray[k];
-                //console.log('someList');
-                //console.log(someList);
-    
-                listForMongo = new ListModel({
-                    id:        someList.id,
-                    name:      someList.name,
-                    slug:      someList.slug,
-                    authorId:  someList.author_id,
-                    sortOrder: someList.sort_order,
-                    count:     someList.count
-                });
-                listForMongo.save(function (err, list) {
+            //i know it's bad form, but for now just remove all doc's from collection
+            //before adding lists
+            ListModel.remove({}, function (err) {
+                if (err) return new Error('Error: ' + err);
+        
+                console.log('removed all docs from ListModel collection');
+
+                ListModel.count({}, function (err, count){
                     if (err) return new Error('Error: ' + err);
+                    console.log('doc count: ' + count);
                 });
+
+                nowAddNewLists();
+            });
     
-                /*
-                //check to see if the list already exist before adding it
-                ListModel.findOne({'id': someList.id} , function (err, list) {
-                    if (err) return console.log(err);
-                    if (list) {
-                        console.log('list already exists: updating it.');
-                        console.log(list);
-                        ListModel.update({}, list, function (err) {
-                            if (err) return console.log(err);
-                            console.log('successfully updated list');
-                        });
-                    } else {
-                        console.log('list does notexist: adding it.');
-                        console.log('falsy list: ' + list);
-                        listForMongo = new ListModel({
-                            id:        someList.id,
-                            name:      someList.name,
-                            slug:      someList.slug,
-                            authorId:  someList.author_id,
-                            sortOrder: someList.sort_order,
-                            count:     someList.count
-                        });
-                        listForMongo.save(function (err, list) {
-                            if (err) throw new Error('Error: ' + err);
-                        });
-                    }
-                });
-                */
+            function nowAddNewLists () {
+                //instantiate a ListModel for each list we have. 
+                for (k = 0; k < allListsArray.length; k++) {
+                    someList = allListsArray[k];
+                    //console.log('someList');
+                    //console.log(someList);
+        
+                    listForMongo = new ListModel({
+                        id:        someList.id,
+                        name:      someList.name,
+                        slug:      someList.slug,
+                        authorId:  someList.author_id,
+                        sortOrder: someList.sort_order,
+                        count:     someList.count
+                    });
+                    listForMongo.save(function (err, list) {
+                        if (err) return new Error('Error: ' + err);
+                    });
+                }
             }
             console.log('OUTSIDE FOR LOOP in saveListsToMongo()');
         }
