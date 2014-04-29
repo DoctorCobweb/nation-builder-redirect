@@ -192,9 +192,10 @@ function globalWrapper() {
     });
     
     
+    //returns all the lists for a person's NB id, which is the :id param passed in
     app.get('/myLists/:id/:access_token', function (req, res) {
         var perPage = 1000,
-            allListsArray = [],
+            allListsArray = [], //holds all of the nations lists
             accessToken = req.params.access_token,
             totalPages,
             totalNumberOfLists,
@@ -203,15 +204,17 @@ function globalWrapper() {
                               '?access_token=' + accessToken + 
                               '&page=1&per_page=' + perPage,
             optionsForFirstRequest = {
-            url: firstPageOfLists,
-            method: 'GET',
-            headers: {
-                'User-Agent': userAgent,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-            };
-    
+                url: firstPageOfLists,
+                method: 'GET',
+                headers: {
+                    'User-Agent': userAgent,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            },
+            listsForAuthorId = [], //holds only lists for a persons NB id
+            myNBId = parseInt(req.params.id, 10);
+
     
         function callbackForFirstRequest(error, response, body) {
             console.log('in callbackForFirstRequest for GET /lists req request.');
@@ -219,27 +222,36 @@ function globalWrapper() {
             if (error) return errorCb(error);
           
             if (response.statusCode == 200) {
-                var bodyObject = JSON.parse(body); // a string
+                var bodyObject = JSON.parse(body), // a string
+                    results = bodyObject.results;
+
                 totalNumberOfLists = bodyObject.total;
                 totalPages = bodyObject.total_pages; // a number
+                 
                 //console.log(bodyObject);
                 console.log('totalNumberOfLists: ' + totalNumberOfLists);
                 console.log('totalPages: ' + totalPages);
     
                 //append individual first page lists to listsArray
-                for (var i = 0; i < bodyObject.results.length; i++) {
-                    allListsArray.push(bodyObject.results[i]);
+                for (var i = 0; i < results.length; i++) {
+                    allListsArray.push(results[i]);
+
+                    //also create the lists for a secific authorId 
+                    if (results[i].author_id === myNBId) {
+                       listsForAuthorId.push(results[i]);
+                    }
                 }
-                //console.log(allListsArray);
-                
+                console.log('listsForAuthorId.length = ' + listsForAuthorId.length);
+
                 //see if we need to paginate to get all lists
                 if (totalPages === 1) {
                     //DONT need to paginate
                     
                     //create and save all the lists to mongodb
-                    saveListsToMongo();
+                    saveAllListsToMongo();
     
-                    return res.send({'lists': allListsArray});
+                    //return res.send({'lists': allListsArray});
+                    return res.send({'lists': listsForAuthorId});
     
                 } else {
                     //DO need to paginate
@@ -272,17 +284,25 @@ function globalWrapper() {
             for (i = 0; i < result.length; i++) {
                 for (j = 0; j < result[i].length; j++) {
                     allListsArray.push(result[i][j]);
+
+                    //also create the lists for a secific authorId 
+                    if (result[i][j].author_id === myNBId) {
+                       listsForAuthorId.push(result[i][j]);
+                    }
                 }
             }
       
             console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
             console.log('allListsArray.length = ' + allListsArray.length);
             console.log('totalNumberOfLists = ' + totalNumberOfLists);
+            console.log('listsForAuthorId.length= ' + listsForAuthorId.length);
            
             //create and save all the lists to mongodb
-            saveListsToMongo();
+            saveAllListsToMongo();
+
     
-            return res.send({'lists': allListsArray});
+            //return res.send({'lists': allListsArray});
+            return res.send({'lists': listsForAuthorId});
         }
     
     
@@ -348,8 +368,7 @@ function globalWrapper() {
         }
     
     
-        //TODO: dont keep appending duplicate data into db
-        function saveListsToMongo() {
+        function saveAllListsToMongo() {
             var k, someList, listForMongo;
       
             //i know it's bad form, but for now just remove all doc's from collection
