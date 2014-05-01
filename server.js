@@ -28,7 +28,8 @@ var applicationRoot = __dirname,
 var mongoUri = process.env.MONGOLAB_URI ||
                'mongodb://localhost/theGreensApp';
 
-var conn = mongoose.createConnection(mongoUri, function (err, res) {
+//connect to the default mongoose connection
+var conn = mongoose.connect(mongoUri, function (err, res) {
     if (err) throw new Error('ERROR: ' + err);
 
     console.log('SUCCESS: connected to MongoDB: ' + mongoUri);
@@ -50,7 +51,8 @@ var List = new mongoose.Schema({
 var ListModel = conn.model('List', List);
 
 
-conn.on('open', function () {
+//listen for open event explicitly
+mongoose.connection.on('open', function () {
     console.log('\'open\' event fired for mongo. now, safely start express sever');
     app = express();
     globalWrapper();
@@ -380,7 +382,7 @@ function globalWrapper() {
 
                 ListModel.count({}, function (err, count){
                     if (err) return new Error('Error: ' + err);
-                    console.log('doc count: ' + count);
+                    console.log('removed all docs, count should be zero: ' + count);
                 });
 
                 nowAddNewLists();
@@ -401,6 +403,8 @@ function globalWrapper() {
                         sortOrder: someList.sort_order,
                         count:     someList.count
                     });
+
+
                     listForMongo.save(function (err, list) {
                         if (err) return new Error('Error: ' + err);
                     });
