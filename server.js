@@ -383,6 +383,7 @@ function globalWrapper() {
                 update.sortOrder = aList.sort_order;
                 update.count =     aList.count;
   
+                //find doc based on the list id sent from NB
                 query.id = update.id;                
 
                 ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
