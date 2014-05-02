@@ -371,46 +371,29 @@ function globalWrapper() {
     
     
         function saveAllListsToMongo() {
-            var k, someList, listForMongo;
-      
-            //i know it's bad form, but for now just remove all doc's from collection
-            //before adding lists
-            ListModel.remove({}, function (err) {
-                if (err) return new Error('Error: ' + err);
-        
-                console.log('removed all docs from ListModel collection');
+            var k, aList, update = {}, query = {};
 
-                ListModel.count({}, function (err, count){
-                    if (err) return new Error('Error: ' + err);
-                    console.log('removed all docs, count should be zero: ' + count);
-                });
+            for (k = 0; k < allListsArray.length; k++) {
+                aList = allListsArray[k];
 
-                nowAddNewLists();
-            });
-    
-            function nowAddNewLists () {
-                //instantiate a ListModel for each list we have. 
-                for (k = 0; k < allListsArray.length; k++) {
-                    someList = allListsArray[k];
-                    //console.log('someList');
-                    //console.log(someList);
-        
-                    listForMongo = new ListModel({
-                        id:        someList.id,
-                        name:      someList.name,
-                        slug:      someList.slug,
-                        authorId:  someList.author_id,
-                        sortOrder: someList.sort_order,
-                        count:     someList.count
-                    });
+                update.id =        aList.id;
+                update.name =      aList.name;
+                update.slug =      aList.slug;
+                update.authorId =  aList.author_id;
+                update.sortOrder = aList.sort_order;
+                update.count =     aList.count;
+  
+                query.id = update.id;                
 
-
-                    listForMongo.save(function (err, list) {
-                        if (err) return new Error('Error: ' + err);
-                    });
-                }
+                ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
             }
-            console.log('OUTSIDE FOR LOOP in saveListsToMongo()');
+
+            function cb (err, doc) {
+                if (err) return new Error('Error: ' + err);
+
+                //doc is the new and updated doc
+                //console.log('findOneAndUpdate doc: ' + doc);
+            }
         }
     
     
