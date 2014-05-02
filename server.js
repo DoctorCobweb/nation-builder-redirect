@@ -141,8 +141,13 @@ function globalWrapper() {
                     //myNBId gets some weird newline char which we dont want
                     var tmp_split= obj["myNBId"].split("\n");
                     obj["myNBId"] = tmp_split[0];
+
+                    //hardcode in permission levels here.
+                    //late match req.body.email to db with permissions.
+                    obj["permissionLevel"] = "admin"; 
+   
     
-                    console.log('sending off myNBId and the access_token');
+                    console.log('sending off permission level, myNBId and the access_token');
                     return res.send(obj);
                 });
             }
