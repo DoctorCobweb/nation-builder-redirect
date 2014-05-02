@@ -144,7 +144,8 @@ function globalWrapper() {
 
                     //hardcode in permission levels here.
                     //late match req.body.email to db with permissions.
-                    obj["permissionLevel"] = "admin"; 
+                    //obj["permissionLevel"] = "admin"; 
+                    obj["permissionLevel"] = "volunteer"; 
    
     
                     console.log('sending off permission level, myNBId and the access_token');
