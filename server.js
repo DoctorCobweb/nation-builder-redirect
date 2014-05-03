@@ -168,10 +168,11 @@ function globalWrapper() {
 
 
                     UserPermissionModel.findOne({'email': req.body.email}, function (e, r) {
-                        if (e) {
+                        if (e || !r) {
                             console.log('ERROR: tried to find users permission: ' + e);
                             return res.send({'error': 'error finding permission'});
                         }
+
 
                         console.log('SUCCES: found user permission: ' + r);
                         //late match req.body.email to db with permissions.
