@@ -46,10 +46,20 @@ var List = new mongoose.Schema({
     count:       Number
 });
 
+
+//define the Schema for a permission
+var UserPermission = new mongoose.Schema({
+    email:              String,
+    permissionLevel:    String
+
+});
+
 //create the Model of the list. instances of Models are documents in mongodb
 //SYNTAX: conn.model(modelName, schema)
 var ListModel = conn.model('List', List);
 
+//similarly for permissions
+var UserPermissionModel = conn.model('UserPermission', UserPermission);
 
 //listen for open event explicitly
 mongoose.connection.on('open', function () {
@@ -156,14 +166,18 @@ function globalWrapper() {
                     var tmp_split= obj["myNBId"].split("\n");
                     obj["myNBId"] = tmp_split[0];
 
-                    //hardcode in permission levels here.
-                    //late match req.body.email to db with permissions.
-                    obj["permissionLevel"] = "admin"; 
-                    //obj["permissionLevel"] = "volunteer"; 
-   
-    
-                    console.log('sending off permission level, myNBId and the access_token');
-                    return res.send(obj);
+
+                    UserPermissionModel.findOne({'email': req.body.email}, function (e, r) {
+                        if (e) {
+                            console.log('ERROR: tried to find users permission: ' + e);
+                            return res.send({'error': 'error finding permission'});
+                        }
+
+                        console.log('SUCCES: found user permission: ' + r);
+                        //late match req.body.email to db with permissions.
+                        obj["permissionLevel"] = r.permissionLevel; 
+                        return res.send(obj);
+                    });
                 });
             }
     
@@ -426,6 +440,23 @@ function globalWrapper() {
         //additional pages we need to call to get all the lists of a nation.
         //to get additional pages we make use of downloadAllAsync function
         request(optionsForFirstRequest, callbackForFirstRequest);
+    });
+
+    app.post('/seedUserPermission', function (req, res) {
+        console.log('in POST /seedUserPermission handler');
+        console.log(req.body);
+
+        var p = new UserPermissionModel({
+            permissionLevel: req.body.permissionLevel,
+            email:           req.body.email
+        });
+
+        p.save(function (e, p) {
+            if (e) return new Error('ERROR: ' + e);
+
+            console.log('saved permission p: ' + p);
+            return res.send({'result': 'ok'});
+        });
     });
     
     
