@@ -1,7 +1,8 @@
 var forever = require('forever-monitor');
 
+console.log('forever.js file innit');
 
-var child = new (forever.Monitor)('server.js', {
+var child = new (forever.Monitor)('./server.js', {
     max: 3,
     silent: true,
     options: []

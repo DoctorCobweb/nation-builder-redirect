@@ -1,7 +1,6 @@
 //
 // server.js : a server for the nation builder oauth2 process
 //             it also handles getting all lists from the nation
-//
 
 var applicationRoot = __dirname,
     path = require('path'),
