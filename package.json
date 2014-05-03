@@ -7,6 +7,7 @@
       , "path" : "0.4.9"
       , "request" : "2.34.0"
       , "mongoose" : "3.8.8"
+      , "forever-monitor": "1.2.3"
     }
   , "engines": {
         "node": "0.10.24"
