@@ -49,7 +49,7 @@ var List = new mongoose.Schema({
 
 //define the Schema for a permission
 var UserPermission = new mongoose.Schema({
-    email:              String,
+    email:              {type: String, index: true, unique:true},
     permissionLevel:    String
 
 });
