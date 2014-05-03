@@ -8,7 +8,6 @@ var applicationRoot = __dirname,
     express = require('express'),
     request = require('request'),
     mongoose = require('mongoose'),
-    forever = require('forever-monitor'),
     exec = require('child_process').exec,
     PORT = process.env.PORT || 5000,
     userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
@@ -22,20 +21,6 @@ var applicationRoot = __dirname,
     accessTokenUri = baseUri + 'oauth/token',
     allLists = baseUri + 'api/v1/' + 'lists',
     app; //express app
-
-//trying to automatically restart crashes
-var child = new (forever.Monitor)('server.js', {
-    max: 3,
-    silent: true,
-    options: []
-  });
-
-child.on('exit', function () {
-    console.log('server.js has exited after 3 restarts');
-});
-
-child.start();
-
 
 
 //mongodb stuff, used for storing all the lists for a nation
