@@ -106,6 +106,18 @@ function globalWrapper() {
                                                + opt24 + opt25 + opt26;
     
     
+        //NOTE ABOUT RETURNED JSON STRUCTURE
+        //
+        //if an error is encountered somewhere along the way, we return JSON with ONLY
+        //an 'error' fields. Nothing else. No accessToken, myNBId or permissionLevel
+        //field is even defined:
+        // {'error': 'there was some error dude'}
+        //
+        //ONLY if everything 'check's out' do we return a JSON response of form:
+        // {'error': null, 
+        //  'access_token': '...', 
+        //  'myNBId': '...', 
+        //  'permissionLevel: '...'} 
         function overBearer() {
             //1. first try to log user in standard NB account using their details
             //if success, we can get their NBId from the href from 'Your account' <a> 
@@ -136,7 +148,9 @@ function globalWrapper() {
                     }
                     var result = JSON.parse(stdout);
                     accessToken = result.access_token;
-                    var obj = { "myNBId": myNBId, "access_token":accessToken};
+                    var obj = {"error": null, 
+                               "myNBId": myNBId, 
+                               "access_token":accessToken};
     
                     //myNBId gets some weird newline char which we dont want
                     var tmp_split= obj["myNBId"].split("\n");
