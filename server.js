@@ -442,6 +442,7 @@ function globalWrapper() {
         request(optionsForFirstRequest, callbackForFirstRequest);
     });
 
+    /* used to seed the collection with a user permission
     app.post('/seedUserPermission', function (req, res) {
         console.log('in POST /seedUserPermission handler');
         console.log(req.body);
@@ -458,6 +459,7 @@ function globalWrapper() {
             return res.send({'result': 'ok'});
         });
     });
+    */
     
     
     app.listen(PORT, function () {
