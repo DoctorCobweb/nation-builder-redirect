@@ -100,6 +100,7 @@ function globalWrapper() {
     
         var myNBId,
             permissionLevel,
+            respObj = {},
             opt11 = ' --email=' + req.body.email,
             opt12 = ' --password=' + req.body.password,
             opt13 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
@@ -129,8 +130,6 @@ function globalWrapper() {
         //  'myNBId': '...', 
         //  'permissionLevel: '...'} 
         function overBearer() {
-            var respObj = {}; //the response obj
-
 
             //0. see if user has a permission set in our database before nagging NB 
             function checkPermissionLevel() {
@@ -154,9 +153,8 @@ function globalWrapper() {
                     console.log('r.permissionLevel: ' + r.permissionLevel);
 
 
-                    //late match req.body.email to db with permissions.
+                    //set the the permissionLevel variable
                     permissionLevel = r.permissionLevel; 
-                    console.log(respObj["permissionLevel"]); 
 
                     //go onto next step
                     tryToLoginToNB();
@@ -179,8 +177,12 @@ function globalWrapper() {
     
                     console.log('1. => casperCmd1 finished its process');
 
-                    //the std output of casperCmd1 is simply myNBId 
+                    //the std output of casperCmd1 is simply myNBId, but it has a 
+                    //trailing newline character which we fix up in next step 
                     myNBId = stdout;
+
+                    //myNBId gets some weird newline char which we dont want
+                    myNBId = myNBId.split("\n")[0];
 
                     //go onto next step
                     summonCasper();
@@ -201,39 +203,16 @@ function globalWrapper() {
 
                     var result = JSON.parse(stdout);
                     accessToken = result.access_token;
+
+                    //construct the final response object to send off to app
                     respObj = {"error": null, 
                                "myNBId": myNBId, 
-                               "access_token":accessToken};
+                               "access_token":accessToken,
+                               "permissionLevel": permissionLevel};
     
-                    //myNBId gets some weird newline char which we dont want
-                    var tmp_split= respObj["myNBId"].split("\n");
-                    respObj["myNBId"] = tmp_split[0];
-
-                    respObj["permissionLevel"] = permissionLevel;
 
                     //all done. woot.
-                    console.log('respObj: ');
-                    console.log(respObj);
                     return res.send(respObj);
-
-
-
-                    /*
-                    UserPermissionModel.findOne({'email': req.body.email}, function (e, r) {
-                        if (e || !r) {
-                            console.log('ERROR: tried to find users permission: ' + e);
-                            return res.send({'error': 'error finding permission'});
-                        }
-
-
-                        console.log('SUCCES: found user permission: ' + r);
-                        //late match req.body.email to db with permissions.
-                        obj["permissionLevel"] = r.permissionLevel; 
-                        return res.send(obj);
-                    });
-                    */
-
-
                 });
             }
     
