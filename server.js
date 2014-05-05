@@ -128,7 +128,28 @@ function globalWrapper() {
         //  'myNBId': '...', 
         //  'permissionLevel: '...'} 
         function overBearer() {
-            //1. first try to log user in standard NB account using their details
+
+
+            //0. see if user has a permission set in our database before nagging NB 
+            function checkPermissionLevel() {
+                UserPermissionModel.findOne({'email': req.body.email}, function (e, r) {
+                    if (e || !r) {
+                        console.log('ERROR: tried to find users permission: ' + e);
+                        return res.send({'error': 'error finding permission'});
+                    }
+
+                    console.log('0. => found user permission set');
+
+                    //late match req.body.email to db with permissions.
+                    obj["permissionLevel"] = r.permissionLevel; 
+
+                    //go onto next step
+                    tryToLoginToNB();
+                });
+            }
+
+
+            //1. try to log user in standard NB account using their details
             //if success, we can get their NBId from the href from 'Your account' <a> 
             function tryToLoginToNB() {
                 console.log('tryToLoginToNB function called');
@@ -141,7 +162,12 @@ function globalWrapper() {
                         return res.send({'error': 'invalid credentials'});
                     }
     
+                    console.log('1. => casperCmd1 finished its process');
+
+                    //the std output of casperCmd1 is simply myNBId 
                     myNBId = stdout;
+
+                    //go onto next step
                     summonCasper();
                 });
         
@@ -155,6 +181,9 @@ function globalWrapper() {
                     if (e) {
                         return res.send({'error': 'summoning fail to get access_token'});
                     }
+
+                    console.log('2. => casperCmd2 finished its process');
+
                     var result = JSON.parse(stdout);
                     accessToken = result.access_token;
                     var obj = {"error": null, 
@@ -165,7 +194,12 @@ function globalWrapper() {
                     var tmp_split= obj["myNBId"].split("\n");
                     obj["myNBId"] = tmp_split[0];
 
+                    //all done. woot.
+                    return res.send(obj);
 
+
+
+                    /*
                     UserPermissionModel.findOne({'email': req.body.email}, function (e, r) {
                         if (e || !r) {
                             console.log('ERROR: tried to find users permission: ' + e);
@@ -178,11 +212,14 @@ function globalWrapper() {
                         obj["permissionLevel"] = r.permissionLevel; 
                         return res.send(obj);
                     });
+                    */
+
+
                 });
             }
     
             //start the process
-            tryToLoginToNB();
+            checkPermissionLevel();
         }
     
         return overBearer();
