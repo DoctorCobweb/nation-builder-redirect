@@ -99,6 +99,7 @@ function globalWrapper() {
         }
     
         var myNBId,
+            permissionLevel,
             opt11 = ' --email=' + req.body.email,
             opt12 = ' --password=' + req.body.password,
             opt13 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
@@ -149,9 +150,13 @@ function globalWrapper() {
 
 
                     console.log('0. => found user permission set');
+                    console.log('r: ' + r);
+                    console.log('r.permissionLevel: ' + r.permissionLevel);
+
 
                     //late match req.body.email to db with permissions.
-                    respObj["permissionLevel"] = r.permissionLevel; 
+                    permissionLevel = r.permissionLevel; 
+                    console.log(respObj["permissionLevel"]); 
 
                     //go onto next step
                     tryToLoginToNB();
@@ -204,7 +209,11 @@ function globalWrapper() {
                     var tmp_split= respObj["myNBId"].split("\n");
                     respObj["myNBId"] = tmp_split[0];
 
+                    respObj["permissionLevel"] = permissionLevel;
+
                     //all done. woot.
+                    console.log('respObj: ');
+                    console.log(respObj);
                     return res.send(respObj);
 
 
