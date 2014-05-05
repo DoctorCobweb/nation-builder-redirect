@@ -128,6 +128,7 @@ function globalWrapper() {
         //  'myNBId': '...', 
         //  'permissionLevel: '...'} 
         function overBearer() {
+            var respObj = {}; //the response obj
 
 
             //0. see if user has a permission set in our database before nagging NB 
@@ -138,10 +139,19 @@ function globalWrapper() {
                         return res.send({'error': 'error finding permission'});
                     }
 
+                    //TODO: dont hardcode permissionLevel values here.
+                    if (r.permissionLevel !== "admin" && 
+                        r.permissionLevel !== "volunteer" ) {
+
+                        console.log('ERROR: permissionLevel is not in permission set');
+                        return res.send({'error': 'permissionLevel not in perm. set'});
+                    }
+
+
                     console.log('0. => found user permission set');
 
                     //late match req.body.email to db with permissions.
-                    obj["permissionLevel"] = r.permissionLevel; 
+                    respObj["permissionLevel"] = r.permissionLevel; 
 
                     //go onto next step
                     tryToLoginToNB();
@@ -186,16 +196,16 @@ function globalWrapper() {
 
                     var result = JSON.parse(stdout);
                     accessToken = result.access_token;
-                    var obj = {"error": null, 
+                    respObj = {"error": null, 
                                "myNBId": myNBId, 
                                "access_token":accessToken};
     
                     //myNBId gets some weird newline char which we dont want
-                    var tmp_split= obj["myNBId"].split("\n");
-                    obj["myNBId"] = tmp_split[0];
+                    var tmp_split= respObj["myNBId"].split("\n");
+                    respObj["myNBId"] = tmp_split[0];
 
                     //all done. woot.
-                    return res.send(obj);
+                    return res.send(respObj);
 
 
 
