@@ -368,6 +368,7 @@ function globalWrapper() {
             console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
             console.log('allListsArray.length = ' + allListsArray.length);
             console.log('totalNumberOfLists = ' + totalNumberOfLists);
+            console.log('and length of lists for author id is:');
             console.log('listsForAuthorId.length= ' + listsForAuthorId.length);
            
             //create and save all the lists to mongodb
@@ -384,61 +385,6 @@ function globalWrapper() {
             return res.send({'error': error});
         }
     
-    
-        function downloadAllAsync(urls, onsuccess, onerror) {
-            var pending = urls.length;
-            var result = [];
-    
-            if (pending === 0) {
-                setTimeout(onsuccess.bind(null, result), 0);
-                return;
-            }
-    
-            urls.forEach(function (url, i) {
-                downloadAsync(url, function (someListsInAnArray) {
-                    if (result) {
-                        result[i] = someListsInAnArray; //store at fixed index
-                        pending--;                    //register the success
-                        if (pending === 0) {
-                            onsuccess(result);
-                        } 
-                    }
-                }, function (error) {
-                    if (result) {
-                        result = null;
-                        onerror(error);
-                    }
-                });
-            });
-        }
-    
-    
-        function downloadAsync(url_, successCb, errorCb) {
-            //console.log('downloading lists from: ' + url_);
-    
-            var optionsIndividual = {
-                url: url_,
-                method: 'GET',
-                headers: {
-                    'User-Agent': userAgent,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            };
-    
-    
-            function callbackIndividual(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    var bodyObj = JSON.parse(body);
-                    return successCb(bodyObj.results);
-                } else {
-                    return errorCb(error);
-                }
-            }
-    
-            //make a call for an individual page of lists
-            request(optionsIndividual, callbackIndividual);
-        }
     
     
         function saveAllListsToMongo() {
@@ -483,7 +429,7 @@ function globalWrapper() {
     app.get('/events/all/:myNBId/:access_token', function (req, res) {
         console.log('in /events/all/:myNBId/:access_token handler');
 
-        var perPage = 50,
+        var perPage = 1000,
             allEventsArray = [], //holds all of the nations events 
             myNBId = parseInt(req.params.myNBId, 10),
             accessToken = req.params.access_token,
@@ -590,7 +536,6 @@ function globalWrapper() {
             //create and save all the events to mongodb
             //saveAllListsToMongo();
 
-
             //return res.send({'lists': allEventsArray});
             return res.send({'events': reducedEventsArray});
         }
@@ -599,63 +544,6 @@ function globalWrapper() {
         function errorCb(error) {
             console.log('error: ' + error);
             return res.send({'error': error});
-        }
-    
-    
-        function downloadAllAsync(urls, onsuccess, onerror) {
-            var pending = urls.length;
-            var result = [];
-    
-            if (pending === 0) {
-                setTimeout(onsuccess.bind(null, result), 0);
-                return;
-            }
-    
-            urls.forEach(function (url, i) {
-                downloadAsync(url, function (someThingsInAnArray) {
-                    if (result) {
-                        result[i] = someThingsInAnArray; //store at fixed index
-                        pending--;                    //register the success
-                        if (pending === 0) {
-                            onsuccess(result);
-                        } 
-                    }
-                }, function (error) {
-                    if (result) {
-                        result = null;
-                        onerror(error);
-                    }
-                });
-            });
-        }
-    
-    
-        function downloadAsync(url_, successCb, errorCb) {
-            //console.log('downloading events from: ' + url_);
-    
-            var optionsIndividual = {
-                url: url_,
-                method: 'GET',
-                headers: {
-                    'User-Agent': userAgent,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            };
-    
-    
-            function callbackIndividual(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    //console.log(JSON.parse(body).page);
-                    var bodyObj = JSON.parse(body);
-                    return successCb(bodyObj.results);
-                } else {
-                    return errorCb(error);
-                }
-            }
-    
-            //make a call for an individual page of events 
-            request(optionsIndividual, callbackIndividual);
         }
     
     
@@ -701,6 +589,62 @@ function globalWrapper() {
 
 
 
+// *** HELPER FUNCTIONS ***
+function downloadAllAsync(urls, onsuccess, onerror) {
+    var pending = urls.length;
+    var result = [];
+
+    if (pending === 0) {
+	setTimeout(onsuccess.bind(null, result), 0);
+	return;
+    }
+
+    urls.forEach(function (url, i) {
+	downloadAsync(url, function (someThingsInAnArray) {
+	    if (result) {
+		result[i] = someThingsInAnArray; //store at fixed index
+		pending--;                    //register the success
+		if (pending === 0) {
+		    onsuccess(result);
+		} 
+	    }
+	}, function (error) {
+	    if (result) {
+		result = null;
+		onerror(error);
+	    }
+	});
+    });
+}
+    
+
+function downloadAsync(url_, successCb, errorCb) {
+    //console.log('downloading events from: ' + url_);
+
+    var optionsIndividual = {
+	url: url_,
+	method: 'GET',
+	headers: {
+	    'User-Agent': userAgent,
+	    'Content-Type': 'application/json',
+	    'Accept': 'application/json'
+	}
+    };
+
+
+    function callbackIndividual(error, response, body) {
+	if (!error && response.statusCode == 200) {
+	    //console.log(JSON.parse(body).page);
+	    var bodyObj = JSON.parse(body);
+	    return successCb(bodyObj.results);
+	} else {
+	    return errorCb(error);
+	}
+    }
+
+    //make a call for an individual page of events 
+    request(optionsIndividual, callbackIndividual);
+}
 
 
     // *** STORAGE SHED ***
