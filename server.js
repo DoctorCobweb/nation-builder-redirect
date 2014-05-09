@@ -18,6 +18,7 @@ var applicationRoot = __dirname,
                   '&client_id=' + process.env.CLIENT_ID +
                   '&redirect_uri=' + process.env.REDIRECT_URI,
     accessTokenUri = baseUri + 'oauth/token',
+    allPeopleUri =  baseUri + 'api/v1/' + 'people',
     allListsUri =  baseUri + 'api/v1/' + 'lists',
     allEventsUri = baseUri + 'api/v1/' + 'sites/' + process.env.NB_SLUG + '/pages/events',
 
@@ -52,8 +53,18 @@ var List = new mongoose.Schema({
 var UserPermission = new mongoose.Schema({
     email:              {type: String, index: true, unique:true},
     permissionLevel:    String
-
 });
+
+var Person = new mongoose.Schema({
+    id:        Number, //NB id
+    firstName: String,
+    lastName:  String,
+    email:     String,
+    phone:     String,
+    mobile:    String,
+});
+
+
 
 //create the Model of the list. instances of Models are documents in mongodb
 //SYNTAX: conn.model(modelName, schema)
@@ -61,6 +72,10 @@ var ListModel = conn.model('List', List);
 
 //similarly for permissions
 var UserPermissionModel = conn.model('UserPermission', UserPermission);
+
+//similarly for person 
+var PersonModel = conn.model('Person', Person);
+
 
 //listen for open event explicitly
 mongoose.connection.on('open', function () {
@@ -118,6 +133,7 @@ function globalWrapper() {
             casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 
                                                + opt24 + opt25 + opt26;
     
+        console.log(casperCmd2);
     
         //NOTE ABOUT RETURNED JSON STRUCTURE
         //
@@ -195,7 +211,7 @@ function globalWrapper() {
         
             //2. go onto asking for the more laborious task of creating access_token
             function summonCasper() {
-                console.log('wake up Casper');
+                console.log('wake up Casper 2');
                 exec(casperCmd2 , {}, function (e, stdout, stderr) {
                     if (e) {
                         return res.send({'error': 'summoning fail to get access_token'});
@@ -205,6 +221,7 @@ function globalWrapper() {
 
                     var result = JSON.parse(stdout);
                     accessToken = result.access_token;
+                    console.log('accessToken: ' + accessToken);
 
                     //construct the final response object to send off to app
                     respObj = {"error": null, 
@@ -589,6 +606,278 @@ function globalWrapper() {
 
 
 
+    //TEST TO GET ALL ppl IN NB
+    //returns all the lists for a person's NB id, which is the :id param passed in
+    app.get('/people/:access_token', function (req, res) {
+        console.log('GET /people/:access_token handler');
+        var perPage = 1000,
+            allPeopleArray = [], //holds all of the nations lists
+            accessToken = req.params.access_token,
+            totalPages,
+            totalNumberOfPeople,
+            extraUrls = [],
+            firstPageOfPeople = allPeopleUri + 
+                              '?access_token=' + accessToken + 
+                              '&page=1&per_page=' + perPage,
+            optionsForFirstRequest = {
+                url: firstPageOfPeople,
+                method: 'GET',
+                headers: {
+                    'User-Agent': userAgent,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            },
+            peopleForAuthorId = [], //holds only people for a persons NB id
+            myNBId = parseInt(req.params.id, 10);
+
+    
+        function callbackForFirstRequest(error, response, body) {
+            console.log('in callbackForFirstRequest for GET /people req request.');
+    
+            if (error) return errorCb(error);
+          
+            if (response.statusCode == 200) {
+                var bodyObject = JSON.parse(body), // a string
+                    results = bodyObject.results;
+
+                totalNumberOfPeople = bodyObject.total;
+                totalPages = bodyObject.total_pages; // a number
+                 
+                //console.log(bodyObject);
+                console.log('totalNumberOfPeople: ' + totalNumberOfPeople);
+                console.log('totalPages: ' + totalPages);
+    
+                //append individual first page lists to listsArray
+                for (var i = 0; i < results.length; i++) {
+                    allPeopleArray.push(results[i]);
+
+                    //also create the lists for a secific authorId 
+                    if (results[i].author_id === myNBId) {
+                       peopleForAuthorId.push(results[i]);
+                    }
+                }
+                console.log('peopleForAuthorId.length = ' + peopleForAuthorId.length);
+
+                //see if we need to paginate to get all lists
+                if (totalPages === 1) {
+                    //DONT need to paginate
+                    
+                    //create and save all the lists to mongodb
+                    saveAllPeopleToMongo();
+    
+                    //return res.send({'people': allPeopleArray});
+                    //return res.send({'people': peopleForAuthorId});
+                    return res.send({'people': allPeopleArray});
+    
+                } else {
+                    //DO need to paginate
+                    console.log('With per_page= ' + perPage + ' => have ' 
+                              + (totalPages - 1) + ' to get.');
+    
+                    //create all the extra urls we need to call
+                    for (var j = totalPages ; j > 1; j--) {
+                        var aUrl = allPeopleUri + '?access_token=' + accessToken +
+                                   '&page=' + j + '&per_page=' + perPage;
+                        extraUrls.push(aUrl);
+                    }
+
+
+                    console.log('have to call thie many extraUrls: ' + extraUrls.length); 
+                    //saveAllPeopleToMongo();
+                    //return res.send({'people': allPeopleArray});
+
+                    //start the heavy lifting to get all the pages concurrently
+                    downloadAllAsync(extraUrls, successCb, errorCb);                
+                }
+    
+            } else {
+                return errorCb(response.statusCode);
+            }
+        }
+    
+    
+        function successCb(result) {
+            console.log('successCb called. got all results');
+    
+            var i, j;
+    
+            //result is an array of arrays wih objects
+            for (i = 0; i < result.length; i++) {
+                for (j = 0; j < result[i].length; j++) {
+                    allPeopleArray.push(result[i][j]);
+
+                    //also create the lists for a secific authorId 
+                    if (result[i][j].author_id === myNBId) {
+                       peopleForAuthorId.push(result[i][j]);
+                    }
+                }
+            }
+      
+            console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
+            console.log('allPeopleArray.length = ' + allPeopleArray.length);
+            console.log('totalNumberOfPeople = ' + totalNumberOfPeople);
+            console.log('and length of people for author id is:');
+            console.log('peopleForAuthorId.length= ' + peopleForAuthorId.length);
+           
+            //create and save all the lists to mongodb
+            saveAllPeopleToMongo();
+
+    
+            //return res.send({'people': peopleForAuthorId});
+            return res.send({'people': allPeopleArray});
+        }
+    
+    
+        function errorCb(error) {
+            console.log('error: ' + error);
+            return res.send({'error': error});
+        }
+    
+    
+    
+        function saveAllPeopleToMongo() {
+            console.log('saveAllPeopleToMongo called');
+            var k, aList, update = {}, query = {};
+
+            for (k = 0; k < allPeopleArray.length; k++) {
+                aPerson= allPeopleArray[k];
+
+                update.id =        aPerson.id;
+                update.firstName = aPerson.first_name;
+                update.lastName =  aPerson.last_name;
+                update.email =     aPerson.email;
+                update.phone=      aPerson.phone;
+                update.mobile =    aPerson.mobile;
+  
+                //find doc based on the list id sent from NB
+                query.id = update.id;                
+
+                PersonModel.findOneAndUpdate(query, update, {upsert: true}, cb);
+            }
+
+            function cb (err, doc) {
+                if (err) return new Error('Error: ' + err);
+
+                //doc is the new and updated doc
+                //console.log('findOneAndUpdate doc: ' + doc);
+                console.log('SUCCESS...updated doc' + doc);
+            }
+        }
+    
+    
+        //ultimately we want to res with json data so set the headers accordingly
+        res.set('Content-Type', 'application/json');
+    
+        //KICK OFF
+        //make an initial call for the first page. from the response we can see how many
+        //additional pages we need to call to get all the lists of a nation.
+        //to get additional pages we make use of downloadAllAsync function
+        request(optionsForFirstRequest, callbackForFirstRequest);
+    });
+
+
+
+    app.post('/namesForId/:id/:access_token', function (req, res) {
+        var people = [],
+            peopleIds = req.body.people, //should be an array
+            peopleIdsCount = peopleIds.length,
+            counter = 0; //used to determine when all async cbs have been called
+
+        console.log('POST in /namesForId handler');
+        //console.log('req.body:');
+        //console.log(req.body);
+    
+        for (var i = 0; i < peopleIdsCount; i++) {
+
+            //want to bind i to loop value event in cb of findOne function
+            (function (i) {
+                PersonModel.findOne({id: peopleIds[i]}, function (e, person) {
+                    console.log('i in closure is: ' + i);
+                    var tempPerson = {}; 
+                    console.log('counter: ' + counter);
+        
+                    if (e) throw new Error('ERROR: unable to find person for id');
+                    if (!person) {
+                        tempPerson.id        = peopleIds[i]; 
+                        tempPerson.firstName = ''; 
+                        tempPerson.lastName  = ''; 
+                    } else {
+                        tempPerson.id        = person.id;
+                        tempPerson.firstName = person.firstName;
+                        tempPerson.lastName  = person.lastName;
+                    }
+                    
+
+                    people.push(tempPerson); 
+    
+
+                    if (counter === (peopleIdsCount - 1)) {
+                        console.log('counter reached BREAK: ' + counter);
+
+                        //we are finished.
+                        res.send({'people': people});
+                    }
+    
+                    counter++;
+                });
+            })(i);
+        }
+    });
+
+
+    // *** STORAGE SHED ***
+    /* used to seed the collection with a user permission
+    app.post('/seedUserPermission', function (req, res) {
+        console.log('in POST /seedUserPermission handler');
+        console.log(req.body);
+
+        var p = new UserPermissionModel({
+            permissionLevel: req.body.permissionLevel,
+            email:           req.body.email
+        });
+
+        p.save(function (e, p) {
+            if (e) return new Error('ERROR: ' + e);
+
+            console.log('saved permission p: ' + p);
+            return res.send({'result': 'ok'});
+        });
+    });
+    */
+    
+    /*
+    app.post('/seedPeopleCollection', function (req, res) {
+        console.log('in POST /seedPeopleCollection handler');
+        console.log(req.body);
+
+        var p = new PersonModel({
+            id:        parseInt(req.body.id, 10),
+            firstName: req.body.firstName,
+            lastName:  req.body.lastName,
+            email:     req.body.email,
+            phone:     req.body.phone,
+            mobile:    req.body.mobile
+        });
+
+        p.save(function (e, p) {
+            if (e) return new Error('ERROR: ' + e);
+
+            console.log('saved person : ' + p);
+            return res.send({'result': p});
+        });
+    });
+    */
+
+    
+    app.listen(PORT, function () {
+        console.log('HTTP express server listening on port %d in %s mode',
+            PORT, app.settings.env);
+    });
+
+} //globalWrapper function
+
+
 // *** HELPER FUNCTIONS ***
 function downloadAllAsync(urls, onsuccess, onerror) {
     var pending = urls.length;
@@ -600,26 +889,28 @@ function downloadAllAsync(urls, onsuccess, onerror) {
     }
 
     urls.forEach(function (url, i) {
-	downloadAsync(url, function (someThingsInAnArray) {
-	    if (result) {
-		result[i] = someThingsInAnArray; //store at fixed index
-		pending--;                    //register the success
-		if (pending === 0) {
-		    onsuccess(result);
-		} 
-	    }
-	}, function (error) {
-	    if (result) {
-		result = null;
-		onerror(error);
-	    }
-	});
+        downloadAsync(url, function (someThingsInAnArray) {
+                if (result) {
+                    result[i] = someThingsInAnArray; //store at fixed index
+        	    pending--;                    //register the success
+                    console.log('pending: ' + pending);
+        	    if (pending === 0) {
+                        onsuccess(result);
+        	    } 
+                }
+            }, function (error) {
+        	if (result) {
+                    result = null;
+        	    onerror(error);
+        	}
+            });
+
     });
 }
     
 
 function downloadAsync(url_, successCb, errorCb) {
-    //console.log('downloading events from: ' + url_);
+
 
     var optionsIndividual = {
 	url: url_,
@@ -644,33 +935,11 @@ function downloadAsync(url_, successCb, errorCb) {
 
     //make a call for an individual page of events 
     request(optionsIndividual, callbackIndividual);
+
+    //console.log('downloading events from: ' + url_);
+    //setTimeout(abba, 1000);
+    //function abba () {
+        //console.log('making a req...');
+    //    request(optionsIndividual, callbackIndividual);
+    //}
 }
-
-
-    // *** STORAGE SHED ***
-    /* used to seed the collection with a user permission
-    app.post('/seedUserPermission', function (req, res) {
-        console.log('in POST /seedUserPermission handler');
-        console.log(req.body);
-
-        var p = new UserPermissionModel({
-            permissionLevel: req.body.permissionLevel,
-            email:           req.body.email
-        });
-
-        p.save(function (e, p) {
-            if (e) return new Error('ERROR: ' + e);
-
-            console.log('saved permission p: ' + p);
-            return res.send({'result': 'ok'});
-        });
-    });
-    */
-    
-    
-    app.listen(PORT, function () {
-        console.log('HTTP express server listening on port %d in %s mode',
-            PORT, app.settings.env);
-    });
-
-} //globalWrapper function
