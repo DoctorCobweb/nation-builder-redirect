@@ -627,9 +627,166 @@ function globalWrapper() {
     });
 
 
+
+
+
+
+
+    app.post('/namesForIds/:id/:access_token', function (req, res) {
+        console.log('in POST /namesForIds/:id/:access_token handler');
+        //console.log(req.body);
+        var peopleIds = req.body.peopleIds,
+            peopleUris = [],
+            accessToken = req.params.access_token,
+            myNBId = parseInt(req.params.id, 10),
+            aPersonUri,
+            peopleNames = [];
+   
+        console.log(peopleIds);
+
+        //create the array of uris we are going request
+        for (var j = 0; j < peopleIds.length; j++) {
+            aPersonUri = allPeopleUri + '/' + peopleIds[j] 
+                        + '?access_token=' + accessToken;
+            peopleUris.push(aPersonUri);
+        }
+        console.log('peopleUris: ' + peopleUris);
+
+
+        //ultimately we want to res with json data so set the headers accordingly
+        res.set('Content-Type', 'application/json');
+    
+
+        //start the heavy lifting
+        downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
+    
+
+        function successCb(result) {
+            console.log('successCb called. got all results');
+    
+            var i, j;
+
+            //result is an array of arrays wih objects
+            for (i = 0; i < result.length; i++) {
+
+                peopleNames.push({
+                    personId: result[i].person.id,
+                    firstName: result[i].person.first_name,
+                    lastName: result[i].person.last_name
+                });
+            }
+ 
+           
+
+            return res.send({'rsvps': peopleNames});
+        }
+    
+    
+        function errorCb(error) {
+            console.log('error: ' + error);
+            return res.send({'error': error});
+        }
+
+
+
+
+        //TODO: refactor this back into global. must change how downloadOneAysnc returns
+        //obj
+        function downloadAllAsyncForPerson(urls, onsuccess, onerror) {
+            var pending = urls.length;
+            var result = [];
+        
+            if (pending === 0) {
+        	setTimeout(onsuccess.bind(null, result), 0);
+        	return;
+            }
+        
+            urls.forEach(function (url, i) {
+                downloadAsyncForPerson(url, function (someThingsInAnArray) {
+                        if (result) {
+                            result[i] = someThingsInAnArray; //store at fixed index
+                	    pending--;                    //register the success
+                            console.log('pending: ' + pending);
+                	    if (pending === 0) {
+                                onsuccess(result);
+                	    } 
+                        }
+                    }, function (error) {
+                	if (result) {
+                            result = null;
+                	    onerror(error);
+                	}
+                    });
+        
+            });
+        }
+            
+        
+        function downloadAsyncForPerson(url_, successCb, errorCb) {
+        
+        
+            var optionsIndividual = {
+        	url: url_,
+        	method: 'GET',
+        	headers: {
+        	    'User-Agent': userAgent,
+        	    'Content-Type': 'application/json',
+        	    'Accept': 'application/json'
+        	}
+            };
+        
+        
+            function callbackIndividual(error, response, body) {
+        	if (!error && response.statusCode == 200) {
+        	    var bodyObj = JSON.parse(body);
+        	    //console.log('callbackIndividual body:');
+        	    //console.log(JSON.parse(body).person.first_name);
+        	    return successCb(bodyObj);
+        	} else {
+        	    return errorCb(error);
+        	}
+            }
+        
+            //make a call for an individual page of events 
+            request(optionsIndividual, callbackIndividual);
+        }
+
+
+
+
+
+
+
+
+
+
+    
+    
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     app.get('/namesForRsvpsToEvent/:id/:access_token', function (req, res) {
         console.log('in GET /namesForRsvpsToEvent/:id/:access_token handler');
-        var perPage = 1,
+        var perPage = 10,
             eventId = req.query.eventId,
             allRsvpsArray = [], 
             accessToken = req.params.access_token,
@@ -684,7 +841,8 @@ function globalWrapper() {
                     //create and save all the lists to mongodb
                     //saveAllPeopleToMongo();
  
-                    console.log('peopleIdsForRsvp: ' + peopleIdsForRsvp); 
+                    //console.log('peopleIdsForRsvp: ' + peopleIdsForRsvp); 
+                    console.log(peopleIdsForRsvp); 
  
     
                     return res.send({'rsvps': allRsvpsArray});
@@ -798,6 +956,7 @@ function globalWrapper() {
 
 
 
+    /*
     // *** ROUTE *** 
     app.post('/namesForId/:id/:access_token', function (req, res) {
         var people = [],
@@ -846,6 +1005,7 @@ function globalWrapper() {
             })(i);
         }
     });
+    */
 
 
 
@@ -1132,6 +1292,8 @@ function downloadAsync(url_, successCb, errorCb) {
 	if (!error && response.statusCode == 200) {
 	    //console.log(JSON.parse(body).page);
 	    var bodyObj = JSON.parse(body);
+	    //console.log('callbackIndividual body:');
+	    //console.log(JSON.parse(body));
 	    return successCb(bodyObj.results);
 	} else {
 	    return errorCb(error);
@@ -1140,12 +1302,5 @@ function downloadAsync(url_, successCb, errorCb) {
 
     //make a call for an individual page of events 
     request(optionsIndividual, callbackIndividual);
-
-    //console.log('downloading events from: ' + url_);
-    //setTimeout(abba, 1000);
-    //function abba () {
-        //console.log('making a req...');
-    //    request(optionsIndividual, callbackIndividual);
-    //}
 }
 
