@@ -102,6 +102,9 @@ function globalWrapper() {
       app.use(express.errorHandler());
     });
     
+
+
+
     
     //route handlers
     app.post('/logthedawgin', function (req, res) {
@@ -242,6 +245,10 @@ function globalWrapper() {
         return overBearer();
     });
     
+
+
+
+
     
     app.get('/oauth2callback', function (req, res) {
         console.log('in /oauth2callback route handler');
@@ -282,6 +289,10 @@ function globalWrapper() {
     });
     
     
+
+
+
+
     //returns all the lists for a person's NB id, which is the :id param passed in
     app.get('/myLists/:id/:access_token', function (req, res) {
         var perPage = 1000,
@@ -443,6 +454,10 @@ function globalWrapper() {
     });
 
 
+
+
+
+
     app.get('/events/all/:myNBId/:access_token', function (req, res) {
         console.log('in /events/all/:myNBId/:access_token handler');
 
@@ -495,7 +510,8 @@ function globalWrapper() {
                     reducedEventsArray.push({
                         eventId: results[i].id,
                         name: results[i].name,
-                        startTime: results[i].start_time
+                        startTime: results[i].start_time,
+                        venue: results[i].venue || ''
                     });        
                 }
 
@@ -545,7 +561,8 @@ function globalWrapper() {
                     reducedEventsArray.push({
                         eventId: result[i].id,
                         name: result[i].name,
-                        startTime: result[i].start_time
+                        startTime: result[i].start_time,
+                        venue: results[i].venue || ''
                     });        
                 }
             }
@@ -606,6 +623,61 @@ function globalWrapper() {
 
 
 
+
+
+
+    app.post('/namesForId/:id/:access_token', function (req, res) {
+        var people = [],
+            peopleIds = req.body.people, //should be an array
+            peopleIdsCount = peopleIds.length,
+            counter = 0; //used to determine when all async cbs have been called
+
+        console.log('POST in /namesForId handler');
+        console.log('req.body:');
+        console.log(req.body);
+    
+        for (var i = 0; i < peopleIdsCount; i++) {
+
+            //want to bind i to loop value event in cb of findOne function
+            (function (i) {
+                PersonModel.findOne({id: peopleIds[i]}, function (e, person) {
+                    //console.log('i in closure is: ' + i);
+                    //console.log('counter: ' + counter);
+                    var tempPerson = {}; 
+        
+                    if (e) throw new Error('ERROR: unable to find person for id');
+                    if (!person) {
+                        tempPerson.id        = peopleIds[i]; 
+                        tempPerson.firstName = ''; 
+                        tempPerson.lastName  = ''; 
+                    } else {
+                        tempPerson.id        = person.id;
+                        tempPerson.firstName = person.firstName;
+                        tempPerson.lastName  = person.lastName;
+                    }
+                    
+
+                    people.push(tempPerson); 
+    
+
+                    if (counter === (peopleIdsCount - 1)) {
+                        console.log('counter at BREAK PT, counter = ' + counter);
+                        console.log('=> people count: ' + (counter + 1));
+
+                        //we are finished.
+                        res.send({'people': people});
+                    }
+    
+                    counter++;
+                });
+            })(i);
+        }
+    });
+
+
+
+    //*** EXPERIMENTAL SECTION ***
+    /*
     //TEST TO GET ALL ppl IN NB
     //returns all the lists for a person's NB id, which is the :id param passed in
     app.get('/people/:access_token', function (req, res) {
@@ -775,55 +847,7 @@ function globalWrapper() {
         //to get additional pages we make use of downloadAllAsync function
         request(optionsForFirstRequest, callbackForFirstRequest);
     });
-
-
-
-    app.post('/namesForId/:id/:access_token', function (req, res) {
-        var people = [],
-            peopleIds = req.body.people, //should be an array
-            peopleIdsCount = peopleIds.length,
-            counter = 0; //used to determine when all async cbs have been called
-
-        console.log('POST in /namesForId handler');
-        //console.log('req.body:');
-        //console.log(req.body);
-    
-        for (var i = 0; i < peopleIdsCount; i++) {
-
-            //want to bind i to loop value event in cb of findOne function
-            (function (i) {
-                PersonModel.findOne({id: peopleIds[i]}, function (e, person) {
-                    console.log('i in closure is: ' + i);
-                    var tempPerson = {}; 
-                    console.log('counter: ' + counter);
-        
-                    if (e) throw new Error('ERROR: unable to find person for id');
-                    if (!person) {
-                        tempPerson.id        = peopleIds[i]; 
-                        tempPerson.firstName = ''; 
-                        tempPerson.lastName  = ''; 
-                    } else {
-                        tempPerson.id        = person.id;
-                        tempPerson.firstName = person.firstName;
-                        tempPerson.lastName  = person.lastName;
-                    }
-                    
-
-                    people.push(tempPerson); 
-    
-
-                    if (counter === (peopleIdsCount - 1)) {
-                        console.log('counter reached BREAK: ' + counter);
-
-                        //we are finished.
-                        res.send({'people': people});
-                    }
-    
-                    counter++;
-                });
-            })(i);
-        }
-    });
+    */
 
 
     // *** STORAGE SHED ***
@@ -943,3 +967,4 @@ function downloadAsync(url_, successCb, errorCb) {
     //    request(optionsIndividual, callbackIndividual);
     //}
 }
+
