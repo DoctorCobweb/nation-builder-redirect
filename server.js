@@ -642,7 +642,7 @@ function globalWrapper() {
             aPersonUri,
             peopleNames = [];
    
-        console.log(peopleIds);
+        //console.log(peopleIds);
 
         //create the array of uris we are going request
         for (var j = 0; j < peopleIds.length; j++) {
@@ -650,7 +650,7 @@ function globalWrapper() {
                         + '?access_token=' + accessToken;
             peopleUris.push(aPersonUri);
         }
-        console.log('peopleUris: ' + peopleUris);
+        //console.log('peopleUris: ' + peopleUris);
 
 
         //ultimately we want to res with json data so set the headers accordingly
@@ -678,7 +678,7 @@ function globalWrapper() {
  
            
 
-            return res.send({'rsvps': peopleNames});
+            return res.send({'translatedPeople': peopleNames});
         }
     
     
