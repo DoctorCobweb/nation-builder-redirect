@@ -475,6 +475,20 @@ function globalWrapper() {
     app.get('/events/all/:myNBId/:access_token', function (req, res) {
         console.log('in /events/all/:myNBId/:access_token handler');
 
+        //ultimately we want to res with json data so set the headers accordingly
+        res.set('Content-Type', 'application/json');
+
+        //var baggage = getAllEventIds(req);
+        //console.log('baggage');
+        //console.log(baggage);
+
+        getAllEventIds(req, function (err, results) {
+            if (err) throw new Error(err);
+
+            return res.send(results);
+        });
+
+        /*
         var perPage = 1000,
             allEventsArray = [], //holds all of the nations events 
             myNBId = parseInt(req.params.myNBId, 10),
@@ -603,45 +617,224 @@ function globalWrapper() {
         }
     
     
-        /*
-        function saveAllListsToMongo() {
-            var k, aList, update = {}, query = {};
+        //function saveAllListsToMongo() {
+        //    var k, aList, update = {}, query = {};
 
-            for (k = 0; k < allListsArray.length; k++) {
-                aList = allListsArray[k];
+        //    for (k = 0; k < allListsArray.length; k++) {
+        //        aList = allListsArray[k];
 
-                update.id =        aList.id;
-                update.name =      aList.name;
-                update.slug =      aList.slug;
-                update.authorId =  aList.author_id;
-                update.sortOrder = aList.sort_order;
-                update.count =     aList.count;
+        //        update.id =        aList.id;
+        //        update.name =      aList.name;
+        //        update.slug =      aList.slug;
+        //        update.authorId =  aList.author_id;
+        //        update.sortOrder = aList.sort_order;
+        //        update.count =     aList.count;
   
                 //find doc based on the list id sent from NB
-                query.id = update.id;                
+        //        query.id = update.id;                
 
-                ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
-            }
+        //        ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
+        //    }
 
-            function cb (err, doc) {
-                if (err) return new Error('Error: ' + err);
+        //    function cb (err, doc) {
+        //        if (err) return new Error('Error: ' + err);
 
                 //doc is the new and updated doc
                 //console.log('findOneAndUpdate doc: ' + doc);
-            }
-        }
-        */
+        //    }
+        //}
     
     
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('Content-Type', 'application/json');
     
         //KICK OFF
         //make an initial call for the first page. from the response we can see how many
         //additional pages we need to call to get all the events of a nation.
         //to get additional pages we make use of downloadAllAsync function
         request(optionsForFirstRequest, callbackForFirstRequest);
+        */
+
+
+
     });
+
+
+
+
+
+
+
+function getAllEventIds(req, cb) {
+    console.log('in getAllEventIds() ....');
+
+    var perPage = 1000,
+        allEventsArray = [], //holds all of the nations events 
+        myNBId = parseInt(req.params.myNBId, 10),
+        accessToken = req.params.access_token,
+        totalPages,
+        totalNumberOfEvents,
+        extraUrls = [],
+        firstPageOfEvents = allEventsUri + 
+    		      '?access_token=' + accessToken + 
+    		      '&page=1&per_page=' + perPage,
+        optionsForFirstRequest = {
+    	url: firstPageOfEvents,
+    	method: 'GET',
+    	headers: {
+    	    'User-Agent': userAgent,
+    	    'Content-Type': 'application/json',
+    	    'Accept': 'application/json'
+    	}
+        },
+        reducedEventsArray= []; //holds only event_id and name, which is sent back 
+    
+    //console.log('myNBId: ' + myNBId);
+    //console.log('accessToken: ' + accessToken);
+    //console.log('firstPageOfEvents: ' + firstPageOfEvents);
+    
+    function callbackForFirstRequest(error, response, body) {
+        console.log('in callbackForFirstRequest for GET all events req request.');
+        
+    
+        if (error) return errorCb(error);
+        //if (error) return cb(error);
+      
+        if (response.statusCode == 200) {
+    	var bodyObject = JSON.parse(body), // a string
+    	    results = bodyObject.results;
+    
+    	totalNumberOfEvents = bodyObject.total;
+    	totalPages = bodyObject.total_pages; // a number
+    	 
+    	//console.log(bodyObject);
+    	console.log('totalNumberOfEvents: ' + totalNumberOfEvents);
+    	console.log('totalPages: ' + totalPages);
+    
+    	//append individual first page events to eventsArray
+    	for (var i = 0; i < results.length; i++) {
+    	    allEventsArray.push(results[i]);
+    
+    	    reducedEventsArray.push({
+    		eventId   : results[i].id,
+    		name      : results[i].name,
+    		startTime : results[i].start_time,
+    		venue     : results[i].venue || ''
+    	    });        
+    	}
+    
+    	//see if we need to paginate to get all events 
+    	if (totalPages === 1) {
+    	    //DONT need to paginate
+    	    
+    	    //create and save all the events to mongodb
+    	    //saveAllListsToMongo();
+    
+    	    //return res.send({'lists': allEventsArray});
+    	    return cb(null, {'events': reducedEventsArray});
+    
+    	} else {
+    	    //DO need to paginate
+    	    console.log('With per_page= ' + perPage + ' => have ' 
+    		      + (totalPages - 1) + ' to get.');
+    
+    	    //create all the extra urls we need to call
+    	    for (var j = totalPages ; j > 1; j--) {
+    		var aUrl = allEventsUri + '?access_token=' + accessToken +
+    			   '&page=' + j + '&per_page=' + perPage;
+    		extraUrls.push(aUrl);
+    	    }
+    
+    	    //start the heavy lifting to get all the pages concurrently
+    	    //downloadAllAsync(extraUrls, successCb, errorCb);                
+    	    downloadAllAsync(extraUrls, successCb, errorCb);                
+    	}
+    
+        } else {
+    	    return errorCb(response.statusCode);
+        }
+    }
+    
+    
+    function successCb(result) {
+        console.log('successCb called. got all results');
+        //
+        //result is of structure:
+        // result = [    {page:3, ..., results: [{event}, {event}, ..., {event}]},
+        //             , {page:4, ..., results: [{event}, {event}, ..., {event}]}
+        //             , ...
+        //             , {page:8, ..., results: [{event}, {event}, ..., {event}]}
+        //          ];
+        //
+    
+        var i, j;
+    
+        //result is an array of arrays wih objects
+        for (i = 0; i < result.length; i++) {
+    	for (j = 0; j < result[i].results[j].length; j++) {
+    	    allEventsArray.push(result[i].results[j]);
+    
+    	    reducedEventsArray.push({
+    		eventId: result[i].results[j].id,
+    		name: result[i].results[j].name,
+    		startTime: result[i].results[j].start_time,
+    		venue: results[i].restuls[j].venue || ''
+    	    });        
+    	}
+        }
+       
+        //create and save all the events to mongodb
+        //saveAllListsToMongo();
+    
+        //return res.send({'lists': allEventsArray});
+        //return {'events': reducedEventsArray};
+        return cb(null, {'events': reducedEventsArray});
+    }
+    
+    
+    function errorCb(error) {
+        console.log('error: ' + error);
+        //return {'error': error};
+        return cb(error);
+    }
+    
+    
+    /*
+    function saveAllListsToMongo() {
+        var k, aList, update = {}, query = {};
+    
+        for (k = 0; k < allListsArray.length; k++) {
+    	aList = allListsArray[k];
+    
+    	update.id =        aList.id;
+    	update.name =      aList.name;
+    	update.slug =      aList.slug;
+    	update.authorId =  aList.author_id;
+    	update.sortOrder = aList.sort_order;
+    	update.count =     aList.count;
+    
+    	//find doc based on the list id sent from NB
+    	query.id = update.id;                
+    
+    	ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
+        }
+    
+        function cb (err, doc) {
+    	if (err) return new Error('Error: ' + err);
+    
+    	//doc is the new and updated doc
+    	//console.log('findOneAndUpdate doc: ' + doc);
+        }
+    }
+    */
+    
+    
+    
+    //KICK OFF
+    //make an initial call for the first page. from the response we can see how many
+    //additional pages we need to call to get all the events of a nation.
+    //to get additional pages we make use of downloadAllAsync function
+    request(optionsForFirstRequest, callbackForFirstRequest);
+}
+
 
 
 
