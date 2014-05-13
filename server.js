@@ -382,17 +382,26 @@ function globalWrapper() {
     
         function successCb(result) {
             console.log('successCb called. got all results');
-    
+            //
+            //result is of structure:
+            // result = [  {page:3, ..., results: [{list}, {list}, ..., {list}]},
+            //             , {page:4, ..., results: [{list}, {list}, ..., {list}]}
+            //             , ...
+            //             , {page:8, ..., results: [{list}, {list}, ..., {list}]}
+            //          ];
+            //
+
             var i, j;
     
             //result is an array of arrays wih objects
             for (i = 0; i < result.length; i++) {
-                for (j = 0; j < result[i].length; j++) {
-                    allListsArray.push(result[i][j]);
+                for (j = 0; j < result[i].results.length; j++) {
+                    allListsArray.push(result[i].results[j]);
 
                     //also create the lists for a secific authorId 
-                    if (result[i][j].author_id === myNBId) {
-                       listsForAuthorId.push(result[i][j]);
+                    if (result[i].results[j].author_id === myNBId) {
+                       //console.log('found match for myNBId list');
+                       listsForAuthorId.push(result[i].results[j]);
                     }
                 }
             }
@@ -555,19 +564,27 @@ function globalWrapper() {
     
         function successCb(result) {
             console.log('successCb called. got all results');
+            //
+            //result is of structure:
+            // result = [    {page:3, ..., results: [{event}, {event}, ..., {event}]},
+            //             , {page:4, ..., results: [{event}, {event}, ..., {event}]}
+            //             , ...
+            //             , {page:8, ..., results: [{event}, {event}, ..., {event}]}
+            //          ];
+            //
     
             var i, j;
     
             //result is an array of arrays wih objects
             for (i = 0; i < result.length; i++) {
-                for (j = 0; j < result[i].length; j++) {
-                    allEventsArray.push(result[i][j]);
+                for (j = 0; j < result[i].results[j].length; j++) {
+                    allEventsArray.push(result[i].results[j]);
 
                     reducedEventsArray.push({
-                        eventId: result[i].id,
-                        name: result[i].name,
-                        startTime: result[i].start_time,
-                        venue: results[i].venue || ''
+                        eventId: result[i].results[j].id,
+                        name: result[i].results[j].name,
+                        startTime: result[i].results[j].start_time,
+                        venue: results[i].restuls[j].venue || ''
                     });        
                 }
             }
@@ -629,9 +646,7 @@ function globalWrapper() {
 
 
 
-
-
-
+    // *** ROUTE *** 
     app.post('/namesForIds/:id/:access_token', function (req, res) {
         console.log('in POST /namesForIds/:id/:access_token handler');
         //console.log(req.body);
@@ -658,11 +673,13 @@ function globalWrapper() {
     
 
         //start the heavy lifting
-        downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
+        //downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
+        downloadAllAsync(peopleUris, successCb, errorCb);                
     
 
         function successCb(result) {
             console.log('successCb called. got all results');
+            //console.log(result);
     
             var i, j;
 
@@ -675,288 +692,20 @@ function globalWrapper() {
                     lastName: result[i].person.last_name
                 });
             }
- 
-           
-
             return res.send({'translatedPeople': peopleNames});
         }
     
-    
         function errorCb(error) {
             console.log('error: ' + error);
             return res.send({'error': error});
         }
 
-
-
-
-        //TODO: refactor this back into global. must change how downloadOneAysnc returns
-        //obj
-        function downloadAllAsyncForPerson(urls, onsuccess, onerror) {
-            var pending = urls.length;
-            var result = [];
-        
-            if (pending === 0) {
-        	setTimeout(onsuccess.bind(null, result), 0);
-        	return;
-            }
-        
-            urls.forEach(function (url, i) {
-                downloadAsyncForPerson(url, function (someThingsInAnArray) {
-                        if (result) {
-                            result[i] = someThingsInAnArray; //store at fixed index
-                	    pending--;                    //register the success
-                            console.log('pending: ' + pending);
-                	    if (pending === 0) {
-                                onsuccess(result);
-                	    } 
-                        }
-                    }, function (error) {
-                	if (result) {
-                            result = null;
-                	    onerror(error);
-                	}
-                    });
-        
-            });
-        }
-            
-        
-        function downloadAsyncForPerson(url_, successCb, errorCb) {
-        
-        
-            var optionsIndividual = {
-        	url: url_,
-        	method: 'GET',
-        	headers: {
-        	    'User-Agent': userAgent,
-        	    'Content-Type': 'application/json',
-        	    'Accept': 'application/json'
-        	}
-            };
-        
-        
-            function callbackIndividual(error, response, body) {
-        	if (!error && response.statusCode == 200) {
-        	    var bodyObj = JSON.parse(body);
-        	    //console.log('callbackIndividual body:');
-        	    //console.log(JSON.parse(body).person.first_name);
-        	    return successCb(bodyObj);
-        	} else {
-        	    return errorCb(error);
-        	}
-            }
-        
-            //make a call for an individual page of events 
-            request(optionsIndividual, callbackIndividual);
-        }
-
-
-
-
-
-
-
-
-
-
-    
-    
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    app.get('/namesForRsvpsToEvent/:id/:access_token', function (req, res) {
-        console.log('in GET /namesForRsvpsToEvent/:id/:access_token handler');
-        var perPage = 10,
-            eventId = req.query.eventId,
-            allRsvpsArray = [], 
-            accessToken = req.params.access_token,
-            totalPages,
-            totalNumberOfRsvps,
-            extraUrls = [],
-            rsvpsForEventFirstPageUri = rsvpsForEventUri + '/' + eventId 
-                                      + '/rsvps' + '?page=1&per_page=' + perPage 
-                                      + '&access_token=' + accessToken,
-            optionsForFirstRequest = {
-                url: rsvpsForEventFirstPageUri,
-                method: 'GET',
-                headers: {
-                    'User-Agent': userAgent,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            },
-            peopleIdsForRsvp = [], //holds only people for a persons nb id
-            myNBId = parseInt(req.params.id, 10);
-
-
-    
-        function callbackForFirstRequest(error, response, body) {
-            console.log('in callbackforfirstrequest for GET namesForRsvpsToEvent req.');
-    
-            if (error) return errorcb(error);
-          
-            if (response.statusCode == 200) {
-                var bodyObject = JSON.parse(body), // a string
-                    results = bodyObject.results;
-
-                totalNumberOfRsvps = bodyObject.total;
-                totalPages = bodyObject.total_pages; // a number
-                 
-                console.log(bodyObject);
-                console.log('totalNumberOfRsvps: ' + totalNumberOfRsvps);
-                console.log('totalPages: ' + totalPages);
-    
-                //append individual first page lists to listsarray
-                for (var i = 0; i < results.length; i++) {
-                    allRsvpsArray.push(results[i]);
-                    peopleIdsForRsvp.push(results[i].person_id);
-                }
-
-                console.log('peopleIdsForRsvp.length = ' + peopleIdsForRsvp.length);
-
-                //see if we need to paginate to get all lists
-                if (totalPages === 1) {
-                    //dont need to paginate
-                    
-                    //create and save all the lists to mongodb
-                    //saveAllPeopleToMongo();
- 
-                    //console.log('peopleIdsForRsvp: ' + peopleIdsForRsvp); 
-                    console.log(peopleIdsForRsvp); 
- 
-    
-                    return res.send({'rsvps': allRsvpsArray});
-    
-                } else {
-                    //do need to paginate
-                    console.log('with per_page= ' + perPage + ' => have ' 
-                              + (totalPages - 1) + ' to get.');
-    
-                    //create all the extra urls we need to call
-                    for (var j = totalPages ; j > 1; j--) {
-
-                        var aUrl = rsvpsForEventUri + '/' + eventId 
-                                      + '/rsvps' + '?page=' + j + '&per_page=' + perPage 
-                                      + '&access_token=' + accessToken;
-
-                        extraUrls.push(aUrl);
-                    }
-
-
-                    console.log('have to call thie many extra urls: ' + extraUrls.length); 
-                    //saveAllPeopleToMongo();
-                    //return res.send({'people': allRsvpsArray});
-
-                    //start the heavy lifting to get all the pages concurrently
-                    downloadAllAsync(extraUrls, successCb, errorCb);                
-                }
-    
-            } else {
-                return errorcb(response.statusCode);
-            }
-        }
-    
-
-        function successCb(result) {
-            console.log('successCb called. got all results');
-    
-            var i, j;
-
-            //result is an array of arrays wih objects
-            for (i = 0; i < result.length; i++) {
-                for (j = 0; j < result[i].length; j++) {
-                    allRsvpsArray.push(result[i][j]);
-                    peopleIdsForRsvp.push(result[i][j].person_id);
-                }
-            }
-      
-            console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
-            console.log('allRsvpsArray.length = ' + allRsvpsArray.length);
-	    console.log('totalNumberOfRsvps = ' + totalNumberOfRsvps);
-            console.log('and length of people ids for rsvps is:');
-            console.log('peopleIdsForRsvp.length= ' + peopleIdsForRsvp.length);
-           
-            //create and save all the lists to mongodb
-            //saveAllPeopleToMongo();
-
-            console.log('peopleIdsForRsvp: ' + peopleIdsForRsvp); 
-    
-            return res.send({'rsvps': allRsvpsArray});
-        }
-    
-    
-        function errorCb(error) {
-            console.log('error: ' + error);
-            return res.send({'error': error});
-        }
-    
-    
-    
-        /*
-        function saveAllPeopleToMongo() {
-            var k, aList, update = {}, query = {};
-
-            for (k = 0; k < allListsArray.length; k++) {
-                aList = allListsArray[k];
-
-                update.id =        aList.id;
-                update.name =      aList.name;
-                update.slug =      aList.slug;
-                update.authorId =  aList.author_id;
-                update.sortOrder = aList.sort_order;
-                update.count =     aList.count;
-  
-                //find doc based on the list id sent from NB
-                query.id = update.id;                
-
-                ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
-            }
-
-            function cb (err, doc) {
-                if (err) return new Error('Error: ' + err);
-
-                //doc is the new and updated doc
-                //console.log('findOneAndUpdate doc: ' + doc);
-            }
-        }
-        */
-    
-    
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('Content-Type', 'application/json');
-    
-        //KICK OFF
-        //make an initial call for the first page. from the response we can see how many
-        //additional pages we need to call to get all the lists of a nation.
-        //to get additional pages we make use of downloadAllAsync function
-        request(optionsForFirstRequest, callbackForFirstRequest);
-    });
-
-
 
 
 
     /*
+    //OLD VERSION
     // *** ROUTE *** 
     app.post('/namesForId/:id/:access_token', function (req, res) {
         var people = [],
@@ -1011,181 +760,9 @@ function globalWrapper() {
 
 
 
+
     //*** EXPERIMENTAL SECTION ***
-    /*
-    // *** ROUTE *** 
-    //TEST TO GET ALL ppl IN NB
-    //returns all the lists for a person's NB id, which is the :id param passed in
-    app.get('/people/:access_token', function (req, res) {
-        console.log('GET /people/:access_token handler');
-        var perpage = 1000,
-            allpeoplearray = [], //holds all of the nations lists
-            accesstoken = req.params.access_token,
-            totalpages,
-            totalnumberofpeople,
-            extraurls = [],
-            firstpageofpeople = allpeopleuri + 
-                              '?access_token=' + accesstoken + 
-                              '&page=1&per_page=' + perpage,
-            optionsforfirstrequest = {
-                url: firstpageofpeople,
-                method: 'get',
-                headers: {
-                    'user-agent': useragent,
-                    'content-type': 'application/json',
-                    'accept': 'application/json'
-                }
-            },
-            peopleforauthorid = [], //holds only people for a persons nb id
-            mynbid = parseint(req.params.id, 10);
-
-    
-        function callbackforfirstrequest(error, response, body) {
-            console.log('in callbackforfirstrequest for get /people req request.');
-    
-            if (error) return errorcb(error);
-          
-            if (response.statuscode == 200) {
-                var bodyobject = json.parse(body), // a string
-                    results = bodyobject.results;
-
-                totalnumberofpeople = bodyobject.total;
-                totalpages = bodyobject.total_pages; // a number
-                 
-                //console.log(bodyobject);
-                console.log('totalnumberofpeople: ' + totalnumberofpeople);
-                console.log('totalpages: ' + totalpages);
-    
-                //append individual first page lists to listsarray
-                for (var i = 0; i < results.length; i++) {
-                    allpeoplearray.push(results[i]);
-
-                    //also create the lists for a secific authorid 
-                    if (results[i].author_id === mynbid) {
-                       peopleforauthorid.push(results[i]);
-                    }
-                }
-                console.log('peopleforauthorid.length = ' + peopleforauthorid.length);
-
-                //see if we need to paginate to get all lists
-                if (totalpages === 1) {
-                    //dont need to paginate
-                    
-                    //create and save all the lists to mongodb
-                    saveallpeopletomongo();
-    
-                    //return res.send({'people': allpeoplearray});
-                    //return res.send({'people': peopleforauthorid});
-                    return res.send({'people': allpeoplearray});
-    
-                } else {
-                    //do need to paginate
-                    console.log('with per_page= ' + perpage + ' => have ' 
-                              + (totalpages - 1) + ' to get.');
-    
-                    //create all the extra urls we need to call
-                    for (var j = totalpages ; j > 1; j--) {
-                        var aurl = allpeopleuri + '?access_token=' + accesstoken +
-                                   '&page=' + j + '&per_page=' + perpage;
-                        extraurls.push(aurl);
-                    }
-
-
-                    console.log('have to call thie many extraurls: ' + extraurls.length); 
-                    //saveallpeopletomongo();
-                    //return res.send({'people': allpeoplearray});
-
-                    //start the heavy lifting to get all the pages concurrently
-                    downloadallasync(extraurls, successcb, errorcb);                
-                }
-    
-            } else {
-                return errorcb(response.statuscode);
-            }
-        }
-    
-    
-        function successcb(result) {
-            console.log('successcb called. got all results');
-    
-            var i, j;
-    
-            //result is an array of arrays wih objects
-            for (i = 0; i < result.length; i++) {
-                for (j = 0; j < result[i].length; j++) {
-                    allpeoplearray.push(result[i][j]);
-
-                    //also create the lists for a secific authorid 
-                    if (result[i][j].author_id === mynbid) {
-                       peopleforauthorid.push(result[i][j]);
-                    }
-                }
-            }
-      
-            console.log('the following should have the same value');
-            console.log('allpeoplearray.length = ' + allpeoplearray.length);
-            console.log('totalnumberofpeople = ' + totalnumberofpeople);
-            console.log('and length of people for author id is:');
-            console.log('peopleforauthorid.length= ' + peopleforauthorid.length);
-           
-            //create and save all the lists to mongodb
-            saveallpeopletomongo();
-
-    
-            //return res.send({'people': peopleforauthorid});
-            return res.send({'people': allpeoplearray});
-        }
-    
-    
-        function errorcb(error) {
-            console.log('error: ' + error);
-            return res.send({'error': error});
-        }
-    
-    
-    
-        function saveallpeopletomongo() {
-            console.log('saveallpeopletomongo called');
-            var k, alist, update = {}, query = {};
-
-            for (k = 0; k < allpeoplearray.length; k++) {
-                aperson= allpeoplearray[k];
-
-                update.id =        aperson.id;
-                update.firstname = aperson.first_name;
-                update.lastname =  aperson.last_name;
-                update.email =     aperson.email;
-                update.phone=      aperson.phone;
-                update.mobile =    aperson.mobile;
-  
-                //find doc based on the list id sent from nb
-                query.id = update.id;                
-
-                personmodel.findoneandupdate(query, update, {upsert: true}, cb);
-            }
-
-            function cb (err, doc) {
-                if (err) return new error('error: ' + err);
-
-                //doc is the new and updated doc
-                //console.log('findoneandupdate doc: ' + doc);
-                console.log('success...updated doc' + doc);
-            }
-        }
-    
-    
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('content-type', 'application/json');
-    
-        //kick off
-        //make an initial call for the first page. from the response we can see how many
-        //additional pages we need to call to get all the lists of a nation.
-        //to get additional pages we make use of downloadallasync function
-        request(optionsforfirstrequest, callbackforfirstrequest);
-    });
-    */
-
-
+    //
     // *** storage shed ***
     //
     // *** route *** 
@@ -1233,6 +810,9 @@ function globalWrapper() {
     */
 
     
+
+
+    //FINALLY START SERVER
     app.listen(PORT, function () {
         console.log('HTTP express server listening on port %d in %s mode',
             PORT, app.settings.env);
@@ -1245,6 +825,7 @@ function globalWrapper() {
 
 // *** HELPER FUNCTIONS ***
 function downloadAllAsync(urls, onsuccess, onerror) {
+
     var pending = urls.length;
     var result = [];
 
@@ -1269,13 +850,11 @@ function downloadAllAsync(urls, onsuccess, onerror) {
         	    onerror(error);
         	}
             });
-
     });
 }
     
 
 function downloadAsync(url_, successCb, errorCb) {
-
 
     var optionsIndividual = {
 	url: url_,
@@ -1290,11 +869,8 @@ function downloadAsync(url_, successCb, errorCb) {
 
     function callbackIndividual(error, response, body) {
 	if (!error && response.statusCode == 200) {
-	    //console.log(JSON.parse(body).page);
 	    var bodyObj = JSON.parse(body);
-	    //console.log('callbackIndividual body:');
-	    //console.log(JSON.parse(body));
-	    return successCb(bodyObj.results);
+	    return successCb(bodyObj);
 	} else {
 	    return errorCb(error);
 	}
@@ -1303,4 +879,3 @@ function downloadAsync(url_, successCb, errorCb) {
     //make a call for an individual page of events 
     request(optionsIndividual, callbackIndividual);
 }
-
