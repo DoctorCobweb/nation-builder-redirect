@@ -750,15 +750,20 @@ function getAllEventIds(accessToken, cb) {
             console.log('successCb called. got all results');
             //console.log(result);
     
-            var i, j;
+            var i, j,
+                firstName,
+                lastName;
 
             //result is an array of arrays wih objects
             for (i = 0; i < result.length; i++) {
+               firstName = result[i].person.first_name,
+               lastName  = result[i].person.last_name;
 
                 peopleNames.push({
-                    personId: result[i].person.id,
-                    firstName: result[i].person.first_name,
-                    lastName: result[i].person.last_name
+                    personId:  result[i].person.id,
+                    firstName: firstName,
+                    lastName:  lastName,
+                    fullName:  firstName + ' ' + lastName 
                 });
             }
             return res.send({'translatedPeople': peopleNames});
