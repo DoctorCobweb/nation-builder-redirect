@@ -472,6 +472,14 @@ function globalWrapper() {
 
 
     // *** ROUTE *** 
+    //return all events. an event is of form:
+    // {
+    //    eventId   : ...,
+    //    name      : ...,
+    //    startTime : ...,
+    //    venue     : ... 
+    // }
+
     app.get('/events/all/:myNBId/:access_token', function (req, res) {
         console.log('in /events/all/:myNBId/:access_token handler');
 
@@ -481,7 +489,7 @@ function globalWrapper() {
         //ultimately we want to res with json data so set the headers accordingly
         res.set('Content-Type', 'application/json');
 
-        getAllEventIds(myNBId, accessToken, function (err, results) {
+        getAllEventIds(accessToken, function (err, results) {
             if (err) throw new Error(err);
 
             return res.send(results);
@@ -489,11 +497,43 @@ function globalWrapper() {
     });
 
 
+    /*
+    //TODO: implement.
+    //
+    app.get('/rsvpsForPerson/:myNBId/:access_token', function (req, res) {
+        var myNBId = parseInt(req.params.myNBId, 10),
+            token = req.params.access_token;
+
+
+        getAllEventIds(token, function (e1, events) {
+            if (e1) throw new Error(e1);
+
+            getAllRsvpsForEvents(token, events, function (e2, eventsWithRsvps) {
+                if (e2) throw new Error(e2);
+             
+                filterEventRsvpsForPerson(eventsWithRsvps, function (e3, eIds ) {
+                    if (e3) throw new Error(e3);
+
+                    eventNamesForEventIds(myNBId, token, eIds, function (e4, events) {
+                        if (e4) throw new Error(e4);
+
+                        //events is [    {eventId: '...', eventName: '...'}
+                        //             ,  ...
+                        //             , {...}
+                        //          ]
+
+                        return res.send(events: events);
+                    });
+                });
+            });
+        });
+    });
+    */
 
 
 
 //HELPER FUNCTION
-function getAllEventIds(myNBId, accessToken, cb) {
+function getAllEventIds(accessToken, cb) {
     console.log('in getAllEventIds() ....');
 
     var perPage = 1000,
@@ -514,6 +554,21 @@ function getAllEventIds(myNBId, accessToken, cb) {
      	    }
         },
         reducedEventsArray= []; //holds only event_id and name, which is sent back 
+
+    function makeAddressString(venueObj) {
+        var address1, city;
+
+        if (venueObj === undefined || 
+            venueObj.address === undefined) return '';
+
+        if (venueObj === null || 
+            venueObj.address === null) return '';
+
+        address1 = venueObj.address.address1 || '';
+        city     = venueObj.address.city || '';
+
+        return address1 + ' ' + city;
+    }
     
     
     function callbackForFirstRequest(error, response, body) {
@@ -541,7 +596,8 @@ function getAllEventIds(myNBId, accessToken, cb) {
     		eventId   : results[i].id,
     		name      : results[i].name,
     		startTime : results[i].start_time,
-    		venue     : results[i].venue || ''
+    		venue     : makeAddressString(results[i].venue) 
+    		//venue     : results[i].venue || ''
     	    });        
     	}
     
@@ -599,7 +655,8 @@ function getAllEventIds(myNBId, accessToken, cb) {
     		eventId: result[i].results[j].id,
     		name: result[i].results[j].name,
     		startTime: result[i].results[j].start_time,
-    		venue: results[i].restuls[j].venue || ''
+    		venue     : makeAddressString(results[i].venue) 
+    		//venue: results[i].restuls[j].venue || ''
     	    });        
     	}
         }
