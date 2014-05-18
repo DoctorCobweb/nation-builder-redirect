@@ -309,7 +309,7 @@ function globalWrapper() {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 }
-            },
+            }
 
     
         function callbackForFirstRequest(error, response, body) {
