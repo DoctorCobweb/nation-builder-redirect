@@ -248,9 +248,6 @@ function globalWrapper() {
     });
     
 
-
-
-
     
     // *** ROUTE *** 
     app.get('/oauth2callback', function (req, res) {
@@ -509,6 +506,138 @@ function globalWrapper() {
 
 
 
+
+
+
+    // *** ROUTE *** 
+    app.post('/namesForIds/:id/:access_token', function (req, res) {
+        console.log('in POST /namesForIds/:id/:access_token handler');
+        //console.log(req.body);
+        var peopleIds = req.body.peopleIds,
+            peopleUris = [],
+            accessToken = req.params.access_token,
+            myNBId = parseInt(req.params.id, 10),
+            aPersonUri,
+            peopleNames = [];
+   
+        //console.log(peopleIds);
+
+        //create the array of uris we are going request
+        for (var j = 0; j < peopleIds.length; j++) {
+            aPersonUri = allPeopleUri + '/' + peopleIds[j] 
+                        + '?access_token=' + accessToken;
+            peopleUris.push(aPersonUri);
+        }
+        //console.log('peopleUris: ' + peopleUris);
+
+
+        //ultimately we want to res with json data so set the headers accordingly
+        res.set('Content-Type', 'application/json');
+    
+
+        //start the heavy lifting
+        //downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
+        downloadAllAsync(peopleUris, successCb, errorCb);                
+    
+
+        function successCb(result) {
+            console.log('successCb called. got all results');
+            //console.log(result);
+    
+            var i, j,
+                firstName,
+                lastName;
+
+            //result is an array of arrays wih objects
+            for (i = 0; i < result.length; i++) {
+               firstName = result[i].person.first_name,
+               lastName  = result[i].person.last_name;
+
+                peopleNames.push({
+                    personId:  result[i].person.id,
+                    firstName: firstName,
+                    lastName:  lastName,
+                    fullName:  firstName + ' ' + lastName 
+                });
+            }
+            return res.send({'translatedPeople': peopleNames});
+        }
+    
+        function errorCb(error) {
+            console.log('error: ' + error);
+            return res.send({'error': error});
+        }
+
+    });
+
+
+
+
+    //*** EXPERIMENTAL SECTION ***
+    //
+    // *** storage shed ***
+    //
+    // *** route *** 
+    /* used to seed the collection with a user permission
+    app.post('/seeduserpermission', function (req, res) {
+        console.log('in post /seeduserpermission handler');
+        console.log(req.body);
+
+        var p = new userpermissionmodel({
+            permissionlevel: req.body.permissionlevel,
+            email:           req.body.email
+        });
+
+        p.save(function (e, p) {
+            if (e) return new error('error: ' + e);
+
+            console.log('saved permission p: ' + p);
+            return res.send({'result': 'ok'});
+        });
+    });
+    */
+    
+    /*
+    // *** ROUTE *** 
+    app.post('/seedPeopleCollection', function (req, res) {
+        console.log('in POST /seedPeopleCollection handler');
+        console.log(req.body);
+
+        var p = new PersonModel({
+            id:        parseInt(req.body.id, 10),
+            firstName: req.body.firstName,
+            lastName:  req.body.lastName,
+            email:     req.body.email,
+            phone:     req.body.phone,
+            mobile:    req.body.mobile
+        });
+
+        p.save(function (e, p) {
+            if (e) return new Error('ERROR: ' + e);
+
+            console.log('saved person : ' + p);
+            return res.send({'result': p});
+        });
+    });
+    */
+
+    
+
+
+    //FINALLY START SERVER
+    app.listen(PORT, function () {
+        console.log('HTTP express server listening on port %d in %s mode',
+            PORT, app.settings.env);
+    });
+
+} //globalWrapper function
+
+
+
+//---------------------- HELPER FUNCTIONS -------------------------------
+
+
+
 //HELPER FUNCTION
 function getAllEventIds(accessToken, cb) {
     console.log('in getAllEventIds() ....');
@@ -691,190 +820,7 @@ function getAllEventIds(accessToken, cb) {
 
 
 
-
-    // *** ROUTE *** 
-    app.post('/namesForIds/:id/:access_token', function (req, res) {
-        console.log('in POST /namesForIds/:id/:access_token handler');
-        //console.log(req.body);
-        var peopleIds = req.body.peopleIds,
-            peopleUris = [],
-            accessToken = req.params.access_token,
-            myNBId = parseInt(req.params.id, 10),
-            aPersonUri,
-            peopleNames = [];
-   
-        //console.log(peopleIds);
-
-        //create the array of uris we are going request
-        for (var j = 0; j < peopleIds.length; j++) {
-            aPersonUri = allPeopleUri + '/' + peopleIds[j] 
-                        + '?access_token=' + accessToken;
-            peopleUris.push(aPersonUri);
-        }
-        //console.log('peopleUris: ' + peopleUris);
-
-
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('Content-Type', 'application/json');
-    
-
-        //start the heavy lifting
-        //downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
-        downloadAllAsync(peopleUris, successCb, errorCb);                
-    
-
-        function successCb(result) {
-            console.log('successCb called. got all results');
-            //console.log(result);
-    
-            var i, j,
-                firstName,
-                lastName;
-
-            //result is an array of arrays wih objects
-            for (i = 0; i < result.length; i++) {
-               firstName = result[i].person.first_name,
-               lastName  = result[i].person.last_name;
-
-                peopleNames.push({
-                    personId:  result[i].person.id,
-                    firstName: firstName,
-                    lastName:  lastName,
-                    fullName:  firstName + ' ' + lastName 
-                });
-            }
-            return res.send({'translatedPeople': peopleNames});
-        }
-    
-        function errorCb(error) {
-            console.log('error: ' + error);
-            return res.send({'error': error});
-        }
-
-    });
-
-
-
-    /*
-    //OLD VERSION
-    // *** ROUTE *** 
-    app.post('/namesForId/:id/:access_token', function (req, res) {
-        var people = [],
-            peopleIds = req.body.people, //should be an array
-            peopleIdsCount = peopleIds.length,
-            counter = 0; //used to determine when all async cbs have been called
-
-        console.log('POST in /namesForId handler');
-        console.log('req.body:');
-        console.log(req.body);
-    
-        for (var i = 0; i < peopleIdsCount; i++) {
-
-            //want to bind i to loop value event in cb of findOne function
-            (function (i) {
-                PersonModel.findOne({id: peopleIds[i]}, function (e, person) {
-                    //console.log('i in closure is: ' + i);
-                    //console.log('counter: ' + counter);
-                    var tempPerson = {}; 
-        
-                    if (e) throw new Error('ERROR: unable to find person for id');
-                    if (!person) {
-                        tempPerson.id        = peopleIds[i]; 
-                        tempPerson.firstName = ''; 
-                        tempPerson.lastName  = ''; 
-                    } else {
-                        tempPerson.id        = person.id;
-                        tempPerson.firstName = person.firstName;
-                        tempPerson.lastName  = person.lastName;
-                    }
-                    
-
-                    people.push(tempPerson); 
-    
-
-                    if (counter === (peopleIdsCount - 1)) {
-                        console.log('counter at BREAK PT, counter = ' + counter);
-                        console.log('=> people count: ' + (counter + 1));
-
-                        //we are finished.
-                        res.send({'people': people});
-                    }
-    
-                    counter++;
-                });
-            })(i);
-        }
-    });
-    */
-
-
-
-
-
-
-    //*** EXPERIMENTAL SECTION ***
-    //
-    // *** storage shed ***
-    //
-    // *** route *** 
-    /* used to seed the collection with a user permission
-    app.post('/seeduserpermission', function (req, res) {
-        console.log('in post /seeduserpermission handler');
-        console.log(req.body);
-
-        var p = new userpermissionmodel({
-            permissionlevel: req.body.permissionlevel,
-            email:           req.body.email
-        });
-
-        p.save(function (e, p) {
-            if (e) return new error('error: ' + e);
-
-            console.log('saved permission p: ' + p);
-            return res.send({'result': 'ok'});
-        });
-    });
-    */
-    
-    /*
-    // *** ROUTE *** 
-    app.post('/seedPeopleCollection', function (req, res) {
-        console.log('in POST /seedPeopleCollection handler');
-        console.log(req.body);
-
-        var p = new PersonModel({
-            id:        parseInt(req.body.id, 10),
-            firstName: req.body.firstName,
-            lastName:  req.body.lastName,
-            email:     req.body.email,
-            phone:     req.body.phone,
-            mobile:    req.body.mobile
-        });
-
-        p.save(function (e, p) {
-            if (e) return new Error('ERROR: ' + e);
-
-            console.log('saved person : ' + p);
-            return res.send({'result': p});
-        });
-    });
-    */
-
-    
-
-
-    //FINALLY START SERVER
-    app.listen(PORT, function () {
-        console.log('HTTP express server listening on port %d in %s mode',
-            PORT, app.settings.env);
-    });
-
-} //globalWrapper function
-
-
-
-
-// *** HELPER FUNCTIONS ***
+//HELPER FUNCTION
 function downloadAllAsync(urls, onsuccess, onerror) {
 
     var pending = urls.length;
@@ -903,10 +849,8 @@ function downloadAllAsync(urls, onsuccess, onerror) {
             });
     });
 }
-    
 
 function downloadAsync(url_, successCb, errorCb) {
-
     var optionsIndividual = {
 	url: url_,
 	method: 'GET',
@@ -916,7 +860,6 @@ function downloadAsync(url_, successCb, errorCb) {
 	    'Accept': 'application/json'
 	}
     };
-
 
     function callbackIndividual(error, response, body) {
 	if (!error && response.statusCode == 200) {
