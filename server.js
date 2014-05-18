@@ -292,7 +292,6 @@ function globalWrapper() {
     });
     
     
-    //TODO: refactor allLists and myLists route handlers
     // *** ROUTE *** 
     //returns all the lists for a person's NB id, which is the :id param passed in
     app.get('/allLists/:id/:access_token', function (req, res) {
@@ -314,8 +313,6 @@ function globalWrapper() {
                     'Accept': 'application/json'
                 }
             },
-            listsForAuthorId = [], //holds only lists for a persons NB id
-            myNBId = parseInt(req.params.id, 10);
 
     
         function callbackForFirstRequest(error, response, body) {
@@ -337,13 +334,8 @@ function globalWrapper() {
                 //append individual first page lists to listsArray
                 for (var i = 0; i < results.length; i++) {
                     allListsArray.push(results[i]);
-
-                    //also create the lists for a secific authorId 
-                    if (results[i].author_id === myNBId) {
-                       listsForAuthorId.push(results[i]);
-                    }
                 }
-                console.log('listsForAuthorId.length = ' + listsForAuthorId.length);
+
 
                 //see if we need to paginate to get all lists
                 if (totalPages === 1) {
@@ -353,7 +345,6 @@ function globalWrapper() {
                     saveAllListsToMongo();
     
                     return res.send({'lists': allListsArray});
-                    //return res.send({'lists': listsForAuthorId});
     
                 } else {
                     //DO need to paginate
@@ -394,27 +385,18 @@ function globalWrapper() {
             for (i = 0; i < result.length; i++) {
                 for (j = 0; j < result[i].results.length; j++) {
                     allListsArray.push(result[i].results[j]);
-
-                    //also create the lists for a secific authorId 
-                    if (result[i].results[j].author_id === myNBId) {
-                       //console.log('found match for myNBId list');
-                       listsForAuthorId.push(result[i].results[j]);
-                    }
                 }
             }
       
             console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
             console.log('allListsArray.length = ' + allListsArray.length);
             console.log('totalNumberOfLists = ' + totalNumberOfLists);
-            console.log('and length of lists for author id is:');
-            console.log('listsForAuthorId.length= ' + listsForAuthorId.length);
            
             //create and save all the lists to mongodb
             saveAllListsToMongo();
 
     
             return res.send({'lists': allListsArray});
-            //return res.send({'lists': listsForAuthorId});
         }
     
     
@@ -462,181 +444,6 @@ function globalWrapper() {
         //to get additional pages we make use of downloadAllAsync function
         request(optionsForFirstRequest, callbackForFirstRequest);
     });
-
-
-
-
-    // *** ROUTE *** 
-    //returns all the lists for a person's NB id, which is the :id param passed in
-    app.get('/myLists/:id/:access_token', function (req, res) {
-        var perPage = 1000,
-            allListsArray = [], //holds all of the nations lists
-            accessToken = req.params.access_token,
-            totalPages,
-            totalNumberOfLists,
-            extraUrls = [],
-            firstPageOfLists = allListsUri + 
-                              '?access_token=' + accessToken + 
-                              '&page=1&per_page=' + perPage,
-            optionsForFirstRequest = {
-                url: firstPageOfLists,
-                method: 'GET',
-                headers: {
-                    'User-Agent': userAgent,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            },
-            listsForAuthorId = [], //holds only lists for a persons NB id
-            myNBId = parseInt(req.params.id, 10);
-
-    
-        function callbackForFirstRequest(error, response, body) {
-            console.log('in callbackForFirstRequest for GET /lists req request.');
-    
-            if (error) return errorCb(error);
-          
-            if (response.statusCode == 200) {
-                var bodyObject = JSON.parse(body), // a string
-                    results = bodyObject.results;
-
-                totalNumberOfLists = bodyObject.total;
-                totalPages = bodyObject.total_pages; // a number
-                 
-                //console.log(bodyObject);
-                console.log('totalNumberOfLists: ' + totalNumberOfLists);
-                console.log('totalPages: ' + totalPages);
-    
-                //append individual first page lists to listsArray
-                for (var i = 0; i < results.length; i++) {
-                    allListsArray.push(results[i]);
-
-                    //also create the lists for a secific authorId 
-                    if (results[i].author_id === myNBId) {
-                       listsForAuthorId.push(results[i]);
-                    }
-                }
-                console.log('listsForAuthorId.length = ' + listsForAuthorId.length);
-
-                //see if we need to paginate to get all lists
-                if (totalPages === 1) {
-                    //DONT need to paginate
-                    
-                    //create and save all the lists to mongodb
-                    saveAllListsToMongo();
-    
-                    //return res.send({'lists': allListsArray});
-                    return res.send({'lists': listsForAuthorId});
-    
-                } else {
-                    //DO need to paginate
-                    console.log('With per_page= ' + perPage + ' => have ' 
-                              + (totalPages - 1) + ' to get.');
-    
-                    //create all the extra urls we need to call
-                    for (var j = totalPages ; j > 1; j--) {
-                        var aUrl = allListsUri + '?access_token=' + accessToken +
-                                   '&page=' + j + '&per_page=' + perPage;
-                        extraUrls.push(aUrl);
-                    }
-    
-                    //start the heavy lifting to get all the pages concurrently
-                    downloadAllAsync(extraUrls, successCb, errorCb);                
-                }
-    
-            } else {
-                return errorCb(response.statusCode);
-            }
-        }
-    
-    
-        function successCb(result) {
-            console.log('successCb called. got all results');
-            //
-            //result is of structure:
-            // result = [  {page:3, ..., results: [{list}, {list}, ..., {list}]},
-            //             , {page:4, ..., results: [{list}, {list}, ..., {list}]}
-            //             , ...
-            //             , {page:8, ..., results: [{list}, {list}, ..., {list}]}
-            //          ];
-            //
-
-            var i, j;
-    
-            //result is an array of arrays wih objects
-            for (i = 0; i < result.length; i++) {
-                for (j = 0; j < result[i].results.length; j++) {
-                    allListsArray.push(result[i].results[j]);
-
-                    //also create the lists for a secific authorId 
-                    if (result[i].results[j].author_id === myNBId) {
-                       //console.log('found match for myNBId list');
-                       listsForAuthorId.push(result[i].results[j]);
-                    }
-                }
-            }
-      
-            console.log('THE FOLLOWING SHOULD HAVE THE SAME VALUE');
-            console.log('allListsArray.length = ' + allListsArray.length);
-            console.log('totalNumberOfLists = ' + totalNumberOfLists);
-            console.log('and length of lists for author id is:');
-            console.log('listsForAuthorId.length= ' + listsForAuthorId.length);
-           
-            //create and save all the lists to mongodb
-            saveAllListsToMongo();
-
-    
-            //return res.send({'lists': allListsArray});
-            return res.send({'lists': listsForAuthorId});
-        }
-    
-    
-        function errorCb(error) {
-            console.log('error: ' + error);
-            return res.send({'error': error});
-        }
-    
-    
-    
-        function saveAllListsToMongo() {
-            var k, aList, update = {}, query = {};
-
-            for (k = 0; k < allListsArray.length; k++) {
-                aList = allListsArray[k];
-
-                update.id =        aList.id;
-                update.name =      aList.name;
-                update.slug =      aList.slug;
-                update.authorId =  aList.author_id;
-                update.sortOrder = aList.sort_order;
-                update.count =     aList.count;
-  
-                //find doc based on the list id sent from NB
-                query.id = update.id;                
-
-                ListModel.findOneAndUpdate(query, update, {upsert: true}, cb);
-            }
-
-            function cb (err, doc) {
-                if (err) return new Error('Error: ' + err);
-
-                //doc is the new and updated doc
-                //console.log('findOneAndUpdate doc: ' + doc);
-            }
-        }
-    
-    
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('Content-Type', 'application/json');
-    
-        //KICK OFF
-        //make an initial call for the first page. from the response we can see how many
-        //additional pages we need to call to get all the lists of a nation.
-        //to get additional pages we make use of downloadAllAsync function
-        request(optionsForFirstRequest, callbackForFirstRequest);
-    });
-
-
 
 
 
