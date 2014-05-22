@@ -471,6 +471,69 @@ function globalWrapper() {
     });
 
 
+
+
+    // *** ROUTE *** 
+    app.post('/namesForIds/:id/:access_token', function (req, res) {
+        console.log('in POST /namesForIds/:id/:access_token handler');
+        //console.log(req.body);
+        var peopleIds = req.body.peopleIds,
+            peopleUris = [],
+            accessToken = req.params.access_token,
+            myNBId = parseInt(req.params.id, 10),
+            aPersonUri,
+            peopleNames = [];
+   
+        //console.log(peopleIds);
+
+        //create the array of uris we are going request
+        for (var j = 0; j < peopleIds.length; j++) {
+            aPersonUri = allPeopleUri + '/' + peopleIds[j] 
+                        + '?access_token=' + accessToken;
+            peopleUris.push(aPersonUri);
+        }
+        //console.log('peopleUris: ' + peopleUris);
+
+
+        //ultimately we want to res with json data so set the headers accordingly
+        res.set('Content-Type', 'application/json');
+    
+
+        //start the heavy lifting
+        downloadAllAsync(peopleUris, successCb, errorCb);                
+    
+
+        function successCb(result) {
+            console.log('successCb called. got all results');
+            //console.log(result);
+    
+            var i, j,
+                firstName,
+                lastName;
+
+            //result is an array of arrays wih objects
+            for (i = 0; i < result.length; i++) {
+               firstName = result[i].person.first_name,
+               lastName  = result[i].person.last_name;
+
+                peopleNames.push({
+                    personId:  result[i].person.id || '',
+                    firstName: firstName || '',
+                    lastName:  lastName || '',
+                    fullName:  firstName + ' ' + lastName 
+                });
+            }
+            return res.send({'translatedPeople': peopleNames});
+        }
+    
+        function errorCb(error) {
+            console.log('error: ' + error);
+            return res.send({'error': error});
+        }
+
+    });
+
+
     /*
     //TODO: implement.
     //
@@ -506,72 +569,14 @@ function globalWrapper() {
 
 
 
-
-
-
-    // *** ROUTE *** 
-    app.post('/namesForIds/:id/:access_token', function (req, res) {
-        console.log('in POST /namesForIds/:id/:access_token handler');
-        //console.log(req.body);
-        var peopleIds = req.body.peopleIds,
-            peopleUris = [],
-            accessToken = req.params.access_token,
-            myNBId = parseInt(req.params.id, 10),
-            aPersonUri,
-            peopleNames = [];
-   
-        //console.log(peopleIds);
-
-        //create the array of uris we are going request
-        for (var j = 0; j < peopleIds.length; j++) {
-            aPersonUri = allPeopleUri + '/' + peopleIds[j] 
-                        + '?access_token=' + accessToken;
-            peopleUris.push(aPersonUri);
-        }
-        //console.log('peopleUris: ' + peopleUris);
-
-
-        //ultimately we want to res with json data so set the headers accordingly
-        res.set('Content-Type', 'application/json');
-    
-
-        //start the heavy lifting
-        //downloadAllAsyncForPerson(peopleUris, successCb, errorCb);                
-        downloadAllAsync(peopleUris, successCb, errorCb);                
-    
-
-        function successCb(result) {
-            console.log('successCb called. got all results');
-            //console.log(result);
-    
-            var i, j,
-                firstName,
-                lastName;
-
-            //result is an array of arrays wih objects
-            for (i = 0; i < result.length; i++) {
-               firstName = result[i].person.first_name,
-               lastName  = result[i].person.last_name;
-
-                peopleNames.push({
-                    personId:  result[i].person.id,
-                    firstName: firstName,
-                    lastName:  lastName,
-                    fullName:  firstName + ' ' + lastName 
-                });
-            }
-            return res.send({'translatedPeople': peopleNames});
-        }
-    
-        function errorCb(error) {
-            console.log('error: ' + error);
-            return res.send({'error': error});
-        }
-
+    //FINALLY START SERVER
+    app.listen(PORT, function () {
+        console.log('HTTP express server listening on port %d in %s mode',
+            PORT, app.settings.env);
     });
 
 
-
+//------------------------------------------------------------------------------ 
 
     //*** EXPERIMENTAL SECTION ***
     //
@@ -624,11 +629,6 @@ function globalWrapper() {
     
 
 
-    //FINALLY START SERVER
-    app.listen(PORT, function () {
-        console.log('HTTP express server listening on port %d in %s mode',
-            PORT, app.settings.env);
-    });
 
 } //globalWrapper function
 
