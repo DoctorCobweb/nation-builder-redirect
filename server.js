@@ -71,6 +71,18 @@ var Person = new mongoose.Schema({
 });
 
 
+var Jobs = new mongoose.Schema(
+    {
+        jobType:    String,
+        httpMethod: String,
+        personId:   Number,
+        listId:     Number
+    },
+    {
+        capped: 8000000 //create a capped collection. want tailable cursors
+    }
+);
+
 
 //create the Model of the list. instances of Models are documents in mongodb
 //SYNTAX: conn.model(modelName, schema)
@@ -82,6 +94,7 @@ var UserPermissionModel = conn.model('UserPermission', UserPermission);
 //similarly for person 
 var PersonModel = conn.model('Person', Person);
 
+var JobsModel = conn.model('Job', Jobs);
 
 //listen for open event explicitly
 mongoose.connection.on('open', function () {
@@ -109,6 +122,23 @@ function globalWrapper() {
     });
     
 
+    app.post('/addAJob', function (req, res) {
+        console.log('in POST /addAJob');
+
+        var aJob = new JobsModel({
+                jobType:    req.body.jobType,
+                httpMethod: req.body.httpMethod,
+                personId:   req.body.personId,
+                listId:     req.body.listId
+            });
+
+        aJob.save(function (err, aJob, numberAffected) {
+            if (err) throw new Error(err);
+
+            console.log('SUCCESS aJob: ' + aJob);
+            return res.send({'jobAdded': aJob});
+        });
+    });
 
 
     
@@ -618,63 +648,10 @@ function globalWrapper() {
         console.log('HTTP express server listening on port %d in %s mode',
             PORT, app.settings.env);
     });
-
-
-//------------------------------------------------------------------------------ 
-
-    //*** EXPERIMENTAL SECTION ***
-    //
-    // *** storage shed ***
-    //
-    // *** route *** 
-    /* used to seed the collection with a user permission
-    app.post('/seeduserpermission', function (req, res) {
-        console.log('in post /seeduserpermission handler');
-        console.log(req.body);
-
-        var p = new userpermissionmodel({
-            permissionlevel: req.body.permissionlevel,
-            email:           req.body.email
-        });
-
-        p.save(function (e, p) {
-            if (e) return new error('error: ' + e);
-
-            console.log('saved permission p: ' + p);
-            return res.send({'result': 'ok'});
-        });
-    });
-    */
-    
-    /*
-    // *** ROUTE *** 
-    app.post('/seedPeopleCollection', function (req, res) {
-        console.log('in POST /seedPeopleCollection handler');
-        console.log(req.body);
-
-        var p = new PersonModel({
-            id:        parseInt(req.body.id, 10),
-            firstName: req.body.firstName,
-            lastName:  req.body.lastName,
-            email:     req.body.email,
-            phone:     req.body.phone,
-            mobile:    req.body.mobile
-        });
-
-        p.save(function (e, p) {
-            if (e) return new Error('ERROR: ' + e);
-
-            console.log('saved person : ' + p);
-            return res.send({'result': p});
-        });
-    });
-    */
-
-    
-
-
-
 } //globalWrapper function
+
+
+
 
 
 
@@ -1046,3 +1023,58 @@ function downloadAsync(url_, successCb, errorCb) {
     //make a call for an individual page of events 
     request(optionsIndividual, callbackIndividual);
 }
+
+
+
+
+
+
+//------------------------------------------------------------------------------ 
+
+    //*** EXPERIMENTAL SECTION ***
+    //
+    // *** storage shed ***
+    //
+    // *** route *** 
+    /* used to seed the collection with a user permission
+    app.post('/seeduserpermission', function (req, res) {
+        console.log('in post /seeduserpermission handler');
+        console.log(req.body);
+
+        var p = new userpermissionmodel({
+            permissionlevel: req.body.permissionlevel,
+            email:           req.body.email
+        });
+
+        p.save(function (e, p) {
+            if (e) return new error('error: ' + e);
+
+            console.log('saved permission p: ' + p);
+            return res.send({'result': 'ok'});
+        });
+    });
+    */
+    
+    /*
+    // *** ROUTE *** 
+    app.post('/seedPeopleCollection', function (req, res) {
+        console.log('in POST /seedPeopleCollection handler');
+        console.log(req.body);
+
+        var p = new PersonModel({
+            id:        parseInt(req.body.id, 10),
+            firstName: req.body.firstName,
+            lastName:  req.body.lastName,
+            email:     req.body.email,
+            phone:     req.body.phone,
+            mobile:    req.body.mobile
+        });
+
+        p.save(function (e, p) {
+            if (e) return new Error('ERROR: ' + e);
+
+            console.log('saved person : ' + p);
+            return res.send({'result': p});
+        });
+    });
+    */
