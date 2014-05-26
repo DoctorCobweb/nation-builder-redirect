@@ -124,6 +124,10 @@ function globalWrapper() {
 
     app.post('/addAJob', function (req, res) {
         console.log('in POST /addAJob');
+        console.log(req.body.jobType);
+        console.log(req.body.httpMethod);
+        console.log(req.body.personId);
+        console.log(req.body.listId);
 
         var aJob = new JobsModel({
                 jobType:    req.body.jobType,
