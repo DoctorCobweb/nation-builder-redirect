@@ -79,7 +79,8 @@ var Jobs = new mongoose.Schema(
         timeAdded:  Date,
         jobNumber:  Number,
         completed:  Boolean,
-        inProgree:  Boolean 
+        inProgress: Boolean 
+
     },
     {
         capped: 8000000 //create a capped collection. want tailable cursors
@@ -145,8 +146,8 @@ function globalWrapper() {
                 personId:   req.body.personId,
                 listId:     req.body.listId,
                 timeAdded:  (new Date()).getTime(),
-                completed: false,
-                inProgree: false
+                completed:  false,
+                inProgress: false
             });
 
         aJob.save(function (err, aJob, numberAffected) {
