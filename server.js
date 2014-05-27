@@ -24,7 +24,6 @@ var applicationRoot = __dirname,
     rsvpsForEventUri = baseUri + 'api/v1/' + 'sites/' 
                        + process.env.NB_SLUG + '/pages/events',
     peopleInAListUri = baseUri + 'api/v1/' + 'lists',
-    jobNumber = 0,
 
     app; //express app
 
@@ -78,7 +77,9 @@ var Jobs = new mongoose.Schema(
         personId:   Number,
         listId:     Number,
         timeAdded:  Date,
-        jobNumber:  Number
+        jobNumber:  Number,
+        completed:  Boolean,
+        inProgree:  Boolean 
     },
     {
         capped: 8000000 //create a capped collection. want tailable cursors
@@ -131,10 +132,12 @@ function globalWrapper() {
         console.log(req.body.personId);
         console.log(req.body.listId);
 
+        /*
         if (jobNumber == Math.pow(2,30) -1)
             jobNumber = 1;
         else
             jobNumber = jobNumber+ 1;
+        */
 
         var aJob = new JobsModel({
                 jobType:    req.body.jobType,
@@ -142,7 +145,8 @@ function globalWrapper() {
                 personId:   req.body.personId,
                 listId:     req.body.listId,
                 timeAdded:  (new Date()).getTime(),
-                jobNumber:  jobNumber 
+                completed: false,
+                inProgree: false
             });
 
         aJob.save(function (err, aJob, numberAffected) {
