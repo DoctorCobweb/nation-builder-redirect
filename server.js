@@ -133,13 +133,6 @@ function globalWrapper() {
         console.log(req.body.personId);
         console.log(req.body.listId);
 
-        /*
-        if (jobNumber == Math.pow(2,30) -1)
-            jobNumber = 1;
-        else
-            jobNumber = jobNumber+ 1;
-        */
-
         var aJob = new JobsModel({
                 jobType:    req.body.jobType,
                 httpMethod: req.body.httpMethod,
