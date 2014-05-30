@@ -488,11 +488,10 @@ function globalWrapper() {
     });
 
 
-    app.get('googleXSS', function (req, res) {
+    app.get('/googleXSS', function (req, res) {
         console.log('googleXSS');
 
         return res.send('alert();');
-
 
     });
 
