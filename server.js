@@ -8,7 +8,7 @@ var applicationRoot = __dirname,
     request = require('request'),
     mongoose = require('mongoose'),
     exec = require('child_process').exec,
-    PORT = process.env.PORT || 5000,
+    PORT = process.env.PORT || 5001,
     userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36',
     baseUri = 'https://' + process.env.NB_SLUG + '.nationbuilder.com/',
     responseType = 'code',
@@ -123,6 +123,14 @@ function globalWrapper() {
     
     app.configure('production', function(){
       app.use(express.errorHandler());
+    });
+
+    app.get('/demokml', function (req, res) {
+        console.log('in /demokml handler');
+        res.set('Content-Type', 'application/vnd.google-earth.kml+xml');
+
+        return res.sendfile('demo.kml');
+
     });
     
 
