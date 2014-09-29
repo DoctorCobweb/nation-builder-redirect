@@ -245,6 +245,7 @@ function globalWrapper() {
                 exec(casperCmd1 , {}, function (e, stdout, stderr) {
                     if (e) {
                         return res.send({'error': 'summoning failed to log you in'});
+                        //return res.send({'error': e});
                     }
                     //stdout is merely the found NBId for the user.
                     if (stdout === "") {
