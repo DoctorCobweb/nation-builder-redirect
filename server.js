@@ -179,7 +179,8 @@ function globalWrapper() {
             opt11 = ' --email=' + req.body.email,
             opt12 = ' --password=' + req.body.password,
             opt13 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
-            casperCmd1 = 'casperjs tryLoginToNB.js ' + opt11 + opt12 + opt13,
+            casperCmd1 = 'casperjs --engine=slimerjs tryLoginToNB.js ' + opt11 
+	               + opt12 + opt13,
     
             //constuct the parameters to send into mimick.js
             opt21 = ' --clientId=' + process.env.CLIENT_ID,
@@ -188,8 +189,8 @@ function globalWrapper() {
             opt24 = ' --loginEmail=' + process.env.LOGIN_EMAIL,
             opt25 = ' --loginPassword=' + process.env.LOGIN_PASSWORD,
             opt26 = ' --nationBuilderSlug=' + process.env.NB_SLUG,
-            casperCmd2 = 'casperjs mimick.js ' + opt21 + opt22 + opt23 
-                                               + opt24 + opt25 + opt26;
+            casperCmd2 = 'casperjs --engine=slimerjs mimick.js ' + opt21 + opt22 
+		       + opt23 + opt24 + opt25 + opt26;
     
         console.log(casperCmd2);
     
